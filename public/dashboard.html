@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="logo">AgriConnect – Sales & Profit Analyzer</div>
+        <div class="menu-item"><i class="fas fa-home"></i> Dashboard</div>
+        <div class="menu-item"><i class="fas fa-carrot"></i> Products</div>
+        <div class="menu-item"><i class="fas fa-shopping-cart"></i> Orders</div>
+        <div class="menu-item"><i class="fas fa-money-bill-wave"></i> Expenses</div>
+        <div class="menu-item"><i class="fas fa-chart-line"></i> Analytics</div>
+        <a href="users.html" class="menu-item" style="text-decoration: none; color: white; display: block;"><i
+                class="fas fa-users"></i> Users</a>
+        <div class="menu-item"><i class="fas fa-user-cog"></i> Settings</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 id="page-title">Dashboard</h1>
+            <button class="btn-logout" id="logoutBtn">Logout</button>
+        </div>
+
+        <!-- Dashboard Home Section -->
+        <div id="dashboard-section">
+            <div class="card-container">
+                <div class="card">
+                    <h3>Total Revenue</h3>
+                    <div class="value" id="stat-revenue">$0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Orders (Today/Month)</h3>
+                    <div class="value" id="stat-orders">0 / 0</div>
+                </div>
+                <div class="card">
+                    <h3>Net Profit</h3>
+                    <div class="value" id="stat-profit">$0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Low Stock Alerts</h3>
+                    <div class="value" id="stat-low-stock" style="color: #e74c3c;">0</div>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h2>Verification Status</h2>
+                <p id="statusMsg">Checking authentication...</p>
+            </div>
+        </div>
+
+        <!-- Inventory / Products Section -->
+        <div id="inventory-section" style="display: none;">
+            <!-- ... existing inventory content ... -->
+            <div class="section-container">
+                <h3>Add New Product</h3>
+                <form id="add-inventory-form"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <input type="text" id="itemName" placeholder="Item Name" required>
+                    <input type="text" id="itemCategory" placeholder="Category" required>
+                    <input type="number" id="itemQuantity" placeholder="Quantity" required>
+                    <input type="number" step="0.01" id="itemPrice" placeholder="Price (Selling)" required>
+                    <input type="number" step="0.01" id="itemCost" placeholder="Cost Price">
+                    <input type="number" id="itemThreshold" placeholder="Low Stock Threshold" value="10">
+                    <button type="submit">Add Item</button>
+                </form>
+            </div>
+
+            <div class="section-container">
+                <h3>Current Inventory</h3>
+                <table id="inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Cost</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Items will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="orders-section" style="display: none;">
+            <div class="section-container">
+                <h3>Create New Order</h3>
+                <form id="create-order-form"
+                    style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; align-items: end;">
+                    <input type="text" id="customerName" placeholder="Customer Name" required>
+
+                    <!-- Simplified Product Selection for MVP -->
+                    <select id="orderProductSelect">
+                        <option value="">Select Product...</option>
+                        <!-- Populated dynamically -->
+                    </select>
+
+                    <input type="number" id="orderQuantity" placeholder="Qty" min="1" required>
+
+                    <button type="submit">Create Order</button>
+                </form>
+            </div>
+
+            <div class="section-container">
+                <h3>Order History</h3>
+                <table id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body">
+                        <!-- Orders will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Expenses Section -->
+        <div id="expenses-section" style="display: none;">
+            <div
+                style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                <h3>Add Expense</h3>
+                <form id="add-expense-form" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <input type="text" id="expenseCategory" placeholder="Category (e.g. Rent, Utilities)" required
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <input type="number" step="0.01" id="expenseAmount" placeholder="Amount" required
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <input type="date" id="expenseDate" required
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <input type="text" id="expenseDescription" placeholder="Description"
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; grid-column: span 3;">
+                    <button type="submit"
+                        style="background: #e74c3c; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; grid-column: span 3;">Add
+                        Expense</button>
+                </form>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h3>Expense History</h3>
+                <table id="expenses-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="text-align: left; border-bottom: 2px solid #f0f2f5;">
+                            <th style="padding: 10px;">Category</th>
+                            <th style="padding: 10px;">Description</th>
+                            <th style="padding: 10px;">Date</th>
+                            <th style="padding: 10px;">Amount</th>
+                            <th style="padding: 10px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenses-table-body"></tbody>
+                </table>
+            </div>
+            <!-- Analytics Section -->
+            <div id="analytics-section" style="display: none;">
+                <div
+                    style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                    <h3>Sales Forecast (Next 7 Days)</h3>
+                    <canvas id="forecastChart" width="400" height="200"></canvas>
+                </div>
+
+                <div
+                    style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h3>Business Intelligence</h3>
+                    <p><strong>Sales Trend:</strong> <span id="sales-trend">Loading...</span></p>
+                    <!-- Add more AI insights here -->
+                </div>
+            </div>
+        </div>
+
+        <script src="js/inventory.js"></script>
+        <script src="js/orders.js"></script>
+        <script src="js/expenses.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="js/analytics.js"></script>
+        <script>
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                window.location.href = '/';
+            }
+
+            // Navigation Logic
+            const menuItems = document.querySelectorAll('.menu-item');
+            const sections = {
+                'Dashboard': document.getElementById('dashboard-section'),
+                'Products': document.getElementById('inventory-section'),
+                'Orders': document.getElementById('orders-section'),
+                'Expenses': document.getElementById('expenses-section'),
+                'Analytics': document.getElementById('analytics-section')
+            };
+            const pageTitle = document.getElementById('page-title');
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const text = item.innerText.trim();
+
+                    // Reset Active State
+                    menuItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    // Handle Section Switching
+                    if (sections[text]) {
+                        Object.values(sections).forEach(sec => sec.style.display = 'none');
+                        sections[text].style.display = 'block';
+                        pageTitle.innerText = text;
+
+                        // Trigger data fetch if needed
+                        if (text === 'Products' && typeof fetchInventory === 'function') {
+                            // fetchInventory is called on load
+                        }
+                        if (text === 'Orders' && typeof fetchOrders === 'function') {
+                            fetchOrders();
+                            populateProductSelect();
+                        }
+                        if (text === 'Expenses' && typeof fetchExpenses === 'function') {
+                            fetchExpenses();
+                        }
+                        if (text === 'Analytics' && typeof fetchForecast === 'function') {
+                            fetchForecast();
+                        }
+                    }
+                });
+            });
+
+            // Fetch Dashboard Stats
+            async function fetchStats() {
+                try {
+                    const response = await fetch('/api/reports/stats', {
+                        headers: { 'Authorization': token }
+                    });
+                    const data = await response.json();
+
+                    document.getElementById('stat-revenue').innerText = `$${data.revenue.total.toFixed(2)}`;
+                    document.getElementById('stat-orders').innerText = `${data.orders.today} / ${data.orders.month}`;
+                    const profit = data.financials.netProfit;
+                    const profitEl = document.getElementById('stat-profit');
+                    profitEl.innerText = `$${profit.toFixed(2)}`;
+
+                    profitEl.className = 'value'; // Reset
+                    if (profit >= 0) profitEl.classList.add('text-success');
+                    else profitEl.classList.add('text-danger');
+
+                    document.getElementById('stat-low-stock').innerText = data.inventory.lowStock;
+
+                } catch (err) {
+                    console.error("Error fetching stats:", err);
+                }
+            }
+
+            fetchStats();
+
+            // Verify token with backend
+            fetch('/api/user/profile', {
+                headers: {
+                    'Authorization': token
+                }
+            })
+                .then(res => {
+                    if (res.status === 200) {
+                        return res.json();
+                    } else {
+                        throw new Error('Unauthorized');
+                    }
+                })
+                .then(data => {
+                    const statusMsg = document.getElementById('statusMsg');
+                    statusMsg.innerText = `Authenticated as User ID: ${data.userId} (Secure Access Granted)`;
+                    statusMsg.classList.add('text-success');
+                })
+                .catch(err => {
+                    console.error(err);
+                    localStorage.removeItem('token');
+                    window.location.href = '/';
+                });
+
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            });
+        </script>
+</body>
+
+</html>

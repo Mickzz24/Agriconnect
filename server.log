@@ -1,0 +1,21 @@
+Executing (default): SELECT name FROM sqlite_master WHERE type='table' AND name='Expenses';
+Executing (default): PRAGMA INDEX_LIST(`Expenses`)
+Executing (default): SELECT name FROM sqlite_master WHERE type='table' AND name='Orders';
+Executing (default): PRAGMA INDEX_LIST(`Orders`)
+Executing (default): SELECT name FROM sqlite_master WHERE type='table' AND name='Inventories';
+Executing (default): PRAGMA INDEX_LIST(`Inventories`)
+Executing (default): SELECT name FROM sqlite_master WHERE type='table' AND name='OrderItems';
+Executing (default): PRAGMA INDEX_LIST(`OrderItems`)
+Executing (default): SELECT name FROM sqlite_master WHERE type='table' AND name='Users';
+Executing (default): PRAGMA INDEX_LIST(`Users`)
+Executing (default): PRAGMA INDEX_INFO(`sqlite_autoindex_Users_1`)
+Executing (default): PRAGMA INDEX_INFO(`sqlite_autoindex_Users_2`)
+Server running on http://localhost:3001
+Executing (default): SELECT `id`, `username`, `email`, `password`, `role`, `createdAt`, `updatedAt` FROM `Users` AS `User` WHERE `User`.`email` = 'owner_verify@test.com';
+Executing (default): SELECT count(*) AS `count` FROM `Orders` AS `Order` WHERE `Order`.`createdAt` >= '2026-02-11 18:30:00.000 +00:00';
+Executing (default): SELECT count(*) AS `count` FROM `Orders` AS `Order` WHERE `Order`.`createdAt` >= '2026-01-31 18:30:00.000 +00:00';
+Executing (default): SELECT sum(`total_amount`) AS `sum` FROM `Orders` AS `Order` WHERE `Order`.`createdAt` >= '2026-02-11 18:30:00.000 +00:00' AND `Order`.`status` != 'Cancelled';
+Executing (default): SELECT sum(`total_amount`) AS `sum` FROM `Orders` AS `Order` WHERE `Order`.`status` != 'Cancelled';
+Executing (default): SELECT sum(`amount`) AS `sum` FROM `Expenses` AS `Expense`;
+Executing (default): SELECT `OrderItem`.`id`, `OrderItem`.`orderId`, `OrderItem`.`inventoryId`, `OrderItem`.`quantity`, `OrderItem`.`price`, `OrderItem`.`createdAt`, `OrderItem`.`updatedAt`, `Order`.`id` AS `Order.id`, `Order`.`customer_name` AS `Order.customer_name`, `Order`.`status` AS `Order.status`, `Order`.`total_amount` AS `Order.total_amount`, `Order`.`createdAt` AS `Order.createdAt`, `Order`.`updatedAt` AS `Order.updatedAt`, `Inventory`.`id` AS `Inventory.id`, `Inventory`.`item_name` AS `Inventory.item_name`, `Inventory`.`category` AS `Inventory.category`, `Inventory`.`quantity` AS `Inventory.quantity`, `Inventory`.`unit_price` AS `Inventory.unit_price`, `Inventory`.`cost_price` AS `Inventory.cost_price`, `Inventory`.`threshold` AS `Inventory.threshold`, `Inventory`.`createdAt` AS `Inventory.createdAt`, `Inventory`.`updatedAt` AS `Inventory.updatedAt` FROM `OrderItems` AS `OrderItem` INNER JOIN `Orders` AS `Order` ON `OrderItem`.`orderId` = `Order`.`id` AND `Order`.`status` != 'Cancelled' LEFT OUTER JOIN `Inventories` AS `Inventory` ON `OrderItem`.`inventoryId` = `Inventory`.`id`;
+Executing (default): SELECT count(*) AS `count` FROM `Inventories` AS `Inventory` WHERE `Inventory`.`quantity` <= `threshold`;

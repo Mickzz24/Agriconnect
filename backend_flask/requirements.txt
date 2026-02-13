@@ -1,0 +1,9 @@
+flask
+flask-cors
+sqlalchemy
+streamlit
+plotly
+scikit-learn
+pandas
+requests
+python-dotenv
