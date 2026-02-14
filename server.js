@@ -30,8 +30,18 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/reports', reportRoutes);
 
 // Protected Route for Dashboard Verification
-app.get('/api/user/profile', verifyToken, (req, res) => {
-    res.status(200).send({ userId: req.userId, message: "Secure Data Accessed" });
+app.get('/api/user/profile', verifyToken, async (req, res) => {
+    try {
+        const user = await db.User.findByPk(req.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.status(200).json({
+            id: user.id,
+            username: user.username,
+            role: user.role
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching profile" });
+    }
 });
 
 // Root route to serve index.html

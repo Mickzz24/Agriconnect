@@ -14,6 +14,7 @@ const verifyToken = (req, res, next) => {
         }
         // If everything good, save to request for use in other routes
         req.userId = decoded.id;
+        req.userRole = decoded.role;
         next();
     });
 };

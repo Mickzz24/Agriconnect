@@ -27,7 +27,12 @@ module.exports = (sequelize, DataTypes) => {
         },
         role: {
             type: DataTypes.STRING,
-            defaultValue: 'staff', // owner, staff, customer
+            defaultValue: 'staff', // owner, staff, customer, deliverer
+            allowNull: false
+        },
+        is_approved: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true, // Auto-approve owners/staff for now, or false for deliverers
             allowNull: false
         }
     }, {

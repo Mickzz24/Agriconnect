@@ -5,9 +5,14 @@ module.exports = (sequelize, DataTypes) => {
     class Order extends Model {
         static associate(models) {
             Order.hasMany(models.OrderItem, { foreignKey: 'orderId', as: 'items' });
+            Order.belongsTo(models.User, { foreignKey: 'userId' });
         }
     }
     Order.init({
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: true // For now, allow null for existing/offline orders
+        },
         customer_name: {
             type: DataTypes.STRING,
             allowNull: false
@@ -20,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.FLOAT,
             allowNull: false,
             defaultValue: 0.0
+        },
+        order_type: {
+            type: DataTypes.ENUM('Online', 'Offline'),
+            defaultValue: 'Offline'
         }
     }, {
         sequelize,

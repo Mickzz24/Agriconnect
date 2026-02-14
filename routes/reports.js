@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models');
-const { Order, OrderItem, Inventory, Expense } = db;
+const { Order, OrderItem, Inventory, Expense, User } = db;
 const { Op } = require('sequelize');
 const verifyToken = require('../middleware/authMiddleware');
 
@@ -61,6 +61,14 @@ router.get('/stats', verifyToken, async (req, res) => {
             }
         });
 
+        // Pending Deliverers
+        const pendingDeliverers = await User.count({
+            where: {
+                role: 'deliverer',
+                is_approved: false
+            }
+        });
+
         res.json({
             orders: {
                 today: ordersToday,
@@ -78,6 +86,9 @@ router.get('/stats', verifyToken, async (req, res) => {
             },
             inventory: {
                 lowStock: lowStockCount
+            },
+            users: {
+                pendingDeliverers
             }
         });
 

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriConnect - User Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="menu-item active"><i class="fas fa-home"></i> Dashboard</div>
+        <div class="menu-item"><i class="fas fa-leaf"></i> Browse & Order</div>
+        <div class="menu-item"><i class="fas fa-history"></i> Order History</div>
+        <div class="menu-item"><i class="fas fa-truck"></i> Track Status</div>
+        <div class="menu-item"><i class="fas fa-credit-card"></i> Make Payments</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 id="page-title">Welcome to AgriConnect</h1>
+            <div style="display: flex; align-items: center;">
+                <div id="userDisplay" class="user-badge">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName">Loading...</span>
+                    <span id="userRole" class="role-label"></span>
+                </div>
+                <button class="btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Home Section -->
+        <div id="dashboard-section">
+            <div class="card-container">
+                <div class="card">
+                    <h3>My Orders</h3>
+                    <div class="value" id="stat-order-count">0</div>
+                </div>
+                <div class="card">
+                    <h3>Available Products</h3>
+                    <div class="value" id="stat-product-count">0</div>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h2>User Portal</h2>
+                <p>Welcome to your personal dashboard. Browse products, place orders, and track your deliveries
+                    seamlessly.</p>
+            </div>
+        </div>
+
+        <!-- Browse & Order Section -->
+        <div id="browse-order-section" style="display: none;">
+            <div class="section-container" style="margin-bottom: 30px;">
+                <h3>Browse Products</h3>
+                <table id="inventory-table-mgt">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="section-container">
+                <h3>Place a New Order</h3>
+                <form id="create-order-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="grid-column: span 2;">
+                        <label>Customer Name (Optional)</label>
+                        <input type="text" id="customerName" placeholder="Your Name or Recipient's Name">
+                    </div>
+                    <div>
+                        <label>Select Product</label>
+                        <select id="orderProductSelect" required>
+                            <option value="">Choose a product...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Quantity</label>
+                        <input type="number" id="orderQuantity" placeholder="Quantity" min="1" required>
+                    </div>
+                    <button type="submit" style="grid-column: span 2;">Place Order</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Order History Section -->
+        <div id="history-section" style="display: none;">
+            <div class="section-container">
+                <h3>My Previous Orders</h3>
+                <table id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Track Status Section -->
+        <div id="track-section" style="display: none;">
+            <div class="section-container">
+                <h3>Delivery Status</h3>
+                <div id="track-content" style="padding: 20px; text-align: center; color: #7f8c8d;">
+                    <i class="fas fa-search-location" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <p>Select an order from history to track its live status.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Section -->
+        <div id="payments-section" style="display: none;">
+            <div class="section-container">
+                <h3>Payment Gateway</h3>
+                <div
+                    style="background: #fdf6ed; border-left: 5px solid #f39c12; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <strong>Note:</strong> You can pay for 'Pending' orders here.
+                </div>
+                <div style="text-align: center; padding: 40px; color: #95a5a6;">
+                    <i class="fas fa-wallet" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <p>No outstanding payments found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/inventory.js"></script>
+    <script src="js/orders.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (!token || role !== 'user') {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Navigation Logic
+        const menuItems = document.querySelectorAll('.menu-item');
+        const sections = {
+            'Dashboard': document.getElementById('dashboard-section'),
+            'Browse & Order': document.getElementById('browse-order-section'),
+            'Order History': document.getElementById('history-section'),
+            'Track Status': document.getElementById('track-section'),
+            'Make Payments': document.getElementById('payments-section')
+        };
+        const pageTitle = document.getElementById('page-title');
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const text = item.innerText.trim();
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                if (sections[text]) {
+                    Object.values(sections).forEach(sec => sec.style.display = 'none');
+                    sections[text].style.display = 'block';
+                    pageTitle.innerText = text;
+
+                    if (text === 'Browse & Order') {
+                        fetchInventory();
+                        if (typeof populateProductSelect === 'function') populateProductSelect();
+                    }
+                    if (text === 'Order History') {
+                        fetchOrders();
+                    }
+                    if (text === 'Make Payments') {
+                        renderPayments();
+                    }
+                }
+            });
+        });
+
+        async function renderPayments() {
+            const paySection = document.getElementById('payments-section');
+            const container = paySection.querySelector('.section-container');
+
+            try {
+                const response = await fetch('/api/orders', { headers: { 'Authorization': token } });
+                const orders = await response.json();
+                const pending = orders.filter(o => o.status === 'Pending');
+
+                let html = `<h3>Payment Gateway</h3>
+                            <div style="background: #fdf6ed; border-left: 5px solid #f39c12; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                                <strong>Note:</strong> You can pay for 'Pending' orders here.
+                            </div>`;
+
+                if (pending.length === 0) {
+                    html += `<div style="text-align: center; padding: 40px; color: #95a5a6;">
+                                <i class="fas fa-wallet" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                                <p>No outstanding payments found.</p>
+                             </div>`;
+                } else {
+                    html += `<table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="text-align: left; border-bottom: 2px solid #eee;">
+                                        <th style="padding: 10px;">Order</th>
+                                        <th style="padding: 10px;">Amount</th>
+                                        <th style="padding: 10px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                    pending.forEach(o => {
+                        html += `<tr style="border-bottom: 1px solid #f9f9f9;">
+                                    <td style="padding: 10px;">Order #${o.id}</td>
+                                    <td style="padding: 10px;">$${o.total_amount.toFixed(2)}</td>
+                                    <td style="padding: 10px;">
+                                        <button onclick="mockPayment(${o.id})" style="background: #27ae60; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">Pay Now</button>
+                                    </td>
+                                 </tr>`;
+                    });
+                    html += `</tbody></table>`;
+                }
+                container.innerHTML = html;
+            } catch (err) { console.error(err); }
+        }
+
+        window.mockPayment = (id) => {
+            alert(`Simulating payment for Order #${id}... success!`);
+            // In a real app, we'd update status to 'Paid' or 'Packed'
+            renderPayments();
+        };
+
+        // Simplified fetch for dashboard stats
+        async function updateStats() {
+            try {
+                // Fetch profile first for header
+                const profileRes = await fetch('/api/user/profile', { headers: { 'Authorization': token } });
+                const profileData = await profileRes.json();
+                document.getElementById('userName').innerText = profileData.username;
+                document.getElementById('userRole').innerText = profileData.role;
+
+                const response = await fetch('/api/orders', { headers: { 'Authorization': token } });
+                const orders = await response.json();
+                document.getElementById('stat-order-count').innerText = orders.length;
+                document.getElementById('stat-product-count').innerText = "20+ Items";
+            } catch (err) { console.error(err); }
+        }
+        updateStats();
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/';
+        });
+
+        // Small customization for the customer view of the table
+        // We want to hide some management columns if they exist
+    </script>
+    <style>
+        /* Hide actions column in inventory browse */
+        #inventory-table-mgt th:last-child,
+        #inventory-table-mgt td:last-child {
+            display: none;
+        }
+
+        #create-order-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        #create-order-form input,
+        #create-order-form select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        #create-order-form button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #create-order-form button:hover {
+            background: #219150;
+        }
+    </style>
+</body>
+
+</html>

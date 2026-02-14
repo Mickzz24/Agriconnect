@@ -9,7 +9,14 @@ const verifyToken = require('../middleware/authMiddleware');
 // Get all orders (with items)
 router.get('/', verifyToken, async (req, res) => {
     try {
+        const whereClause = {};
+        // If not owner or staff, only see own orders
+        if (req.userRole !== 'owner' && req.userRole !== 'staff') {
+            whereClause.userId = req.userId;
+        }
+
         const orders = await Order.findAll({
+            where: whereClause,
             include: [{
                 model: OrderItem,
                 as: 'items',
@@ -53,9 +60,11 @@ router.post('/', verifyToken, async (req, res) => {
 
         // Create Order
         const newOrder = await Order.create({
-            customer_name,
+            userId: req.userId,
+            customer_name: customer_name || 'Customer',
             total_amount,
-            status: 'Pending'
+            status: 'Pending',
+            order_type: req.body.order_type || (req.userRole === 'user' ? 'Online' : 'Offline')
         }, { transaction: t });
 
         // Create Order Items and Update Inventory

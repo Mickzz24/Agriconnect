@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 router.get('/', verifyToken, async (req, res) => {
     try {
         const users = await User.findAll({
-            attributes: ['id', 'username', 'email', 'role', 'createdAt']
+            attributes: ['id', 'username', 'email', 'role', 'is_approved', 'createdAt']
         });
         res.status(200).json(users);
     } catch (err) {
@@ -20,7 +20,7 @@ router.get('/', verifyToken, async (req, res) => {
 
 // Add a new user/staff (Protected)
 router.post('/', verifyToken, async (req, res) => {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, role, is_approved } = req.body;
 
     try {
         const hashedPassword = bcrypt.hashSync(password, 8);
@@ -28,13 +28,29 @@ router.post('/', verifyToken, async (req, res) => {
             username,
             email,
             password: hashedPassword,
-            role: role || 'staff'
+            role: role || 'staff',
+            is_approved: is_approved !== undefined ? is_approved : true
         });
 
         res.status(201).send({ message: "User registered successfully!", userId: newUser.id });
     } catch (err) {
         console.error("Error adding user:", err);
         res.status(500).send({ message: err.message || "Error adding user." });
+    }
+});
+
+// Update user status/approval (Protected)
+router.put('/:id/status', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { is_approved } = req.body;
+        const user = await User.findByPk(id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        await user.update({ is_approved });
+        res.json({ message: 'User status updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 

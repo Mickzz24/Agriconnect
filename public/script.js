@@ -43,7 +43,12 @@ registerForm.addEventListener('submit', async (e) => {
 
     if (data.auth && data.token) {
         localStorage.setItem('token', data.token);
-        window.location.href = '/dashboard.html';
+        localStorage.setItem('role', data.role);
+
+        if (data.role === 'owner') window.location.href = '/dashboard.html';
+        else if (data.role === 'staff') window.location.href = '/staff.html';
+        else if (data.role === 'accountant') window.location.href = '/accountant.html';
+        else window.location.href = '/user.html';
     } else {
         alert(data.message || 'Registration failed');
     }
@@ -59,7 +64,12 @@ loginForm.addEventListener('submit', async (e) => {
 
     if (data.auth && data.token) {
         localStorage.setItem('token', data.token);
-        window.location.href = '/dashboard.html';
+        localStorage.setItem('role', data.role);
+
+        if (data.role === 'owner') window.location.href = '/dashboard.html';
+        else if (data.role === 'staff') window.location.href = '/staff.html';
+        else if (data.role === 'accountant') window.location.href = '/accountant.html';
+        else window.location.href = '/user.html';
     } else {
         alert(data.message || 'Login failed Check your credentials');
     }

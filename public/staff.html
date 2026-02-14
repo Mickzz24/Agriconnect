@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriConnect - Staff Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="menu-item active"><i class="fas fa-home"></i> Dashboard</div>
+        <div class="menu-item"><i class="fas fa-tasks"></i> Manage Orders</div>
+        <div class="menu-item"><i class="fas fa-store-alt"></i> Offline Sales</div>
+        <div class="menu-item"><i class="fas fa-file-invoice"></i> Payments & Invoices</div>
+        <div class="menu-item"><i class="fas fa-boxes"></i> Inventory</div>
+        <div class="menu-item"><i class="fas fa-bell"></i> Notifications</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 id="page-title">Staff Dashboard</h1>
+            <div style="display: flex; align-items: center;">
+                <div id="userDisplay" class="user-badge">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName">Loading...</span>
+                    <span id="userRole" class="role-label"></span>
+                </div>
+                <button class="btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Home Section -->
+        <div id="dashboard-section">
+            <div class="card-container">
+                <div class="card">
+                    <h3>Orders (Today/Month)</h3>
+                    <div class="value" id="stat-orders">0 / 0</div>
+                </div>
+                <div class="card">
+                    <h3>Low Stock Alerts</h3>
+                    <div class="value" id="stat-low-stock" style="color: #e74c3c;">0</div>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h2>Staff Operations Portal</h2>
+                <p>Manage farm sales, orders, and inventory stock levels in real-time.</p>
+            </div>
+        </div>
+
+        <!-- Manage Orders Section -->
+        <div id="manage-orders-section" style="display: none;">
+            <div class="section-container">
+                <h3>Order Fulfillment</h3>
+                <p style="color: #7f8c8d; margin-bottom: 20px;">Confirm, prepare, and assign deliverers for incoming
+                    orders.</p>
+                <table id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Offline Sales Section -->
+        <div id="offline-sales-section" style="display: none;">
+            <div class="section-container">
+                <h3>Farm Sale</h3>
+                <form id="create-order-form"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                    <div style="grid-column: span 2;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Customer Name</label>
+                        <input type="text" id="customerName" placeholder="Enter Customer Name (e.g. Guest)" required
+                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Select Product</label>
+                        <select id="orderProductSelect" required
+                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <option value="">Choose...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Quantity</label>
+                        <input type="number" id="orderQuantity" placeholder="Qty" min="1" required
+                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    <button type="submit"
+                        style="grid-column: span 2; background: #27ae60; color: white; padding: 12px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer;">Register
+                        Offline Sale</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Payments & Invoices Section -->
+        <div id="payments-invoices-section" style="display: none;">
+            <div class="section-container">
+                <h3>Track Payment Status</h3>
+                <table id="payments-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Invoices</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payments-body">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Update Inventory Section -->
+        <div id="inventory-section" style="display: none;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button id="toggle-product-form" class="btn-action"
+                    style="background-color: #27ae60; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 600;">
+                    <i class="fas fa-plus"></i> Add Current Stock
+                </button>
+            </div>
+
+            <div id="product-form-card" class="section-container" style="display: none; margin-bottom: 30px;">
+                <h3>Manual Stock Adjustment</h3>
+                <form id="add-inventory-form"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <input type="text" id="itemName" placeholder="Item Name" required>
+                    <input type="text" id="itemCategory" placeholder="Category" required>
+                    <input type="number" id="itemQuantity" placeholder="Quantity To Add" required>
+                    <input type="number" step="0.01" id="itemPrice" placeholder="Selling Price" required>
+                    <button type="submit">Update Stock</button>
+                </form>
+            </div>
+
+            <div class="section-container">
+                <h3>Live Farm Inventory</h3>
+                <table id="inventory-table-mgt">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Stock Level</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div id="notifications-section" style="display: none;">
+            <div class="section-container">
+                <h3>Operational Alerts</h3>
+                <div id="low-stock-notifications">
+                    <!-- Notifications for farmer -->
+                </div>
+                <div
+                    style="text-align: center; padding: 30px; border: 2px dashed #eee; border-radius: 10px; margin-top: 20px;">
+                    <i class="fas fa-paper-plane" style="font-size: 2rem; color: #27ae60; margin-bottom: 10px;"></i>
+                    <p>Farmers will be automatically notified via SMS/Email if stock drops below threshold.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/inventory.js"></script>
+    <script src="js/orders.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (!token || role !== 'staff') {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Navigation Logic
+        const menuItems = document.querySelectorAll('.menu-item');
+        const sections = {
+            'Dashboard': document.getElementById('dashboard-section'),
+            'Manage Orders': document.getElementById('manage-orders-section'),
+            'Offline Sales': document.getElementById('offline-sales-section'),
+            'Payments & Invoices': document.getElementById('payments-invoices-section'),
+            'Inventory': document.getElementById('inventory-section'),
+            'Notifications': document.getElementById('notifications-section')
+        };
+        const pageTitle = document.getElementById('page-title');
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const text = item.innerText.trim();
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                if (sections[text]) {
+                    Object.values(sections).forEach(sec => sec.style.display = 'none');
+                    sections[text].style.display = 'block';
+                    pageTitle.innerText = text;
+
+                    if (text === 'Manage Orders' || text === 'Payments & Invoices') {
+                        fetchOrders();
+                        if (text === 'Payments & Invoices') renderPaymentTable();
+                    }
+                    if (text === 'Offline Sales') {
+                        populateProductSelect();
+                    }
+                    if (text === 'Inventory') {
+                        fetchInventory();
+                    }
+                    if (text === 'Notifications') {
+                        checkStockNotifications();
+                    }
+                }
+            });
+        });
+
+        async function fetchStats() {
+            try {
+                // Fetch profile first for header
+                const profileRes = await fetch('/api/user/profile', { headers: { 'Authorization': token } });
+                const profileData = await profileRes.json();
+                document.getElementById('userName').innerText = profileData.username;
+                document.getElementById('userRole').innerText = profileData.role;
+
+                const response = await fetch('/api/reports/stats', { headers: { 'Authorization': token } });
+                const data = await response.json();
+                document.getElementById('stat-orders').innerText = `${data.orders.today} / ${data.orders.month}`;
+                document.getElementById('stat-low-stock').innerText = data.inventory.lowStock;
+            } catch (err) { console.error(err); }
+        }
+        fetchStats();
+
+        async function renderPaymentTable() {
+            try {
+                const response = await fetch('/api/orders', { headers: { 'Authorization': token } });
+                const orders = await response.json();
+                const tbody = document.getElementById('payments-body');
+                tbody.innerHTML = '';
+
+                orders.forEach(o => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>#${o.id}</td>
+                        <td>${o.customer_name}</td>
+                        <td>$${o.total_amount.toFixed(2)}</td>
+                        <td><span style="background: #fdf6ed; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${o.status}</span></td>
+                        <td>
+                            <button onclick="generateInvoice(${o.id})" class="btn-action" style="background: #3498db; color: white;">
+                                <i class="fas fa-file-pdf"></i> Invoice
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        window.generateInvoice = (id) => {
+            alert(`Generating invoice for Order #${id}... downloaded!`);
+        }
+
+        function checkStockNotifications() {
+            const container = document.getElementById('low-stock-notifications');
+            container.innerHTML = '<div style="background: #fff5f5; border-left: 5px solid #e74c3c; padding: 15px; margin-bottom: 15px;"><strong>Stock Warning:</strong> Organic Milk is below threshold (5 left)</div>';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/';
+        });
+
+        // Form toggle
+        const toggleBtn = document.getElementById('toggle-product-form');
+        const formCard = document.getElementById('product-form-card');
+        if (toggleBtn && formCard) {
+            toggleBtn.onclick = () => {
+                const isHidden = formCard.style.display === 'none';
+                formCard.style.display = isHidden ? 'block' : 'none';
+                toggleBtn.innerHTML = isHidden ? 'Close Form' : '<i class="fas fa-plus"></i> Add Current Stock';
+                toggleBtn.style.background = isHidden ? '#e74c3c' : '#27ae60';
+            };
+        }
+
+        // Create order listener (handled by orders.js if form ID matches)
+        // We can keep a specific alert if we want, but orders.js will now handle the fetch.
+    </script>
+</body>
+
+</html>

@@ -6,8 +6,8 @@
   "scripts": {
     "start": "concurrently \"npm run server\" \"npm run flask\" \"npm run streamlit\"",
     "server": "node server.js",
-    "flask": "cd backend_flask && python3 app.py",
-    "streamlit": "python3 -m streamlit run backend_flask/dashboard/dashboard_ui.py",
+    "flask": "cd backend_flask && python app.py",
+    "streamlit": "python -m streamlit run backend_flask/dashboard/dashboard_ui.py",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
