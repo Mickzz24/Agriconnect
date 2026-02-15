@@ -27,6 +27,9 @@ router.post('/register', async (req, res) => {
         res.status(200).send({ auth: true, token: token, role: user.role });
     } catch (err) {
         console.error("Error registering user:", err);
+        if (err.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).send({ message: "Username or Email already exists." });
+        }
         return res.status(500).send({ message: "Error registering user." });
     }
 });

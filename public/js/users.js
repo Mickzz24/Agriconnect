@@ -80,12 +80,10 @@
                 <td>${statusBadge}</td>
                 <td style="font-size: 0.85rem; color: #95a5a6;">${new Date(user.createdAt).toLocaleDateString()}</td>
                 <td>
-                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <div class="action-buttons">
                         ${approveBtn}
-                        <div style="display: flex; gap: 5px;">
-                            <button class="btn-action btn-edit" onclick="window.editUser(${user.id})" title="Edit Profile"><i class="fas fa-edit"></i></button>
-                            <button class="btn-action btn-danger" onclick="window.deleteUser(${user.id})" title="Remove User"><i class="fas fa-trash"></i></button>
-                        </div>
+                        <button class="btn-action btn-edit" onclick="window.editUser(${user.id})" title="Edit Profile"><i class="fas fa-edit"></i></button>
+                        <button class="btn-action btn-danger" onclick="window.deleteUser(${user.id})" title="Remove User"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             `;

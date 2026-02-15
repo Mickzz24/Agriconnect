@@ -6,8 +6,8 @@
   "scripts": {
     "start": "concurrently \"npm run server\" \"npm run flask\" \"npm run streamlit\"",
     "server": "node server.js",
-    "flask": "cd backend_flask && python app.py",
-    "streamlit": "python -m streamlit run backend_flask/dashboard/dashboard_ui.py",
+    "flask": "cd backend_flask && python3 app.py",
+    "streamlit": "python3 -m streamlit run backend_flask/dashboard/dashboard_ui.py",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,6 +18,7 @@
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
+    "csv-parser": "^3.2.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^8.0.1"

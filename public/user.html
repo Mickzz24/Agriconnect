@@ -108,36 +108,8 @@
                 </div>
             </div>
 
-            <div class="section-container" id="order-form-container"
-                style="display: none; border-top: 4px solid #27ae60;">
-                <h3>Confirm Your Order</h3>
-                <form id="create-order-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div
-                        style="grid-column: span 2; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
-                        <label style="color: #7f8c8d; font-size: 0.85rem; margin-bottom: 5px;">Selected Product</label>
-                        <div id="selected-product-display" style="font-weight: 600; font-size: 1.2rem; color: #2c3e50;">
-                            None</div>
-                        <input type="hidden" id="orderProductSelect" required>
-                    </div>
-
-                    <div style="grid-column: span 1;">
-                        <label>Enter Quantity</label>
-                        <input type="number" id="orderQuantity" placeholder="How many do you need?" min="1" required>
-                    </div>
-
-                    <div style="grid-column: span 1;">
-                        <label>Payment Method</label>
-                        <select id="orderPaymentMethod" required>
-                            <option value="UPI">UPI</option>
-                            <option value="COD">Cash on Delivery (COD)</option>
-                        </select>
-                    </div>
-
-                    <div style="grid-column: span 1; display: flex; align-items: flex-end;">
-                        <button type="submit" style="width: 100%; height: 45px;">Confirm & Place Order</button>
-                    </div>
-                </form>
-            </div>
+            <!-- Direct Order Form Removed in favor of Cart Modal -->
+            <!-- <div class="section-container" id="order-form-container" ... > ... </div> -->
         </div>
 
         <!-- Order History Section -->
@@ -189,6 +161,7 @@
 
     <script src="js/inventory.js"></script>
     <script src="js/orders.js"></script>
+    <script src="js/cart.js"></script>
     <script>
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
@@ -370,11 +343,15 @@
             grid.innerHTML = '';
             sample.forEach(p => {
                 const isDairy = p.category.toLowerCase().includes('dairy');
+                const imgSrc = isDairy ? 'images/dairy.png' : 'images/organic.png';
+
                 const div = document.createElement('div');
                 div.className = 'rec-card';
                 div.innerHTML = `
-                    <i class="fas ${isDairy ? 'fa-cheese' : 'fa-leaf'}" style="color: ${isDairy ? '#fbc02d' : '#27ae60'};"></i>
-                    <span>${p.item_name}</span>
+                    <div style="height: 120px; overflow: hidden; border-radius: 8px; margin-bottom: 10px;">
+                        <img src="${imgSrc}" alt="${p.item_name}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <span style="font-weight: 600; color: #2c3e50;">${p.item_name}</span>
                 `;
                 div.onclick = () => {
                     navigateToSection('Products');
@@ -393,38 +370,83 @@
             const totalDairyEl = document.getElementById('total-dairy');
             if (!grid) return;
 
-            const organic = products.filter(p => p.category.toLowerCase().includes('organic') || p.category.toLowerCase().includes('vegetable'));
+            const organic = products.filter(p => p.category.toLowerCase().includes('organic') || p.category.toLowerCase().includes('vegetable') || p.category.toLowerCase().includes('fruit'));
             const dairy = products.filter(p => p.category.toLowerCase().includes('dairy'));
 
             if (totalOrganicEl) totalOrganicEl.innerText = organic.length;
             if (totalDairyEl) totalDairyEl.innerText = dairy.length;
 
             grid.innerHTML = '';
-            products.forEach(p => {
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                const isDairy = p.category.toLowerCase().includes('dairy');
-                const isLowStock = p.quantity <= p.threshold;
+            grid.style.display = 'block'; // Reset grid display to block to allow sections
 
-                card.innerHTML = `
-                    <div class="product-icon ${isDairy ? 'dairy' : 'organic'}">
-                        <i class="fas ${isDairy ? 'fa-cheese' : 'fa-leaf'}"></i>
-                    </div>
-                    <div class="product-info">
-                        <h4>${p.item_name}</h4>
-                        <p class="category">${p.category}</p>
-                        <div class="product-meta">
-                            <span class="price">$${p.unit_price.toFixed(2)}/${p.unit || 'kg'}</span>
-                            <span class="stock ${isLowStock ? 'low' : ''}">${isLowStock ? 'Low Stock' : 'In Stock'}</span>
-                        </div>
-                        <button onclick="quickSelectProduct(${p.id}, '${p.item_name}')" class="btn-buy">
-                            <i class="fas fa-shopping-cart"></i> Buy Now
-                        </button>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
+            // Dairy Section
+            if (dairy.length > 0) {
+                const dairySection = document.createElement('div');
+                dairySection.innerHTML = `<h3 style="margin: 20px 0 15px; grid-column: 1/-1; color: #f39c12; border-bottom: 2px solid #f39c12; padding-bottom: 5px;">Fresh Dairy Products</h3>`;
+                const dairyGrid = document.createElement('div');
+                dairyGrid.style.display = 'grid';
+                dairyGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
+                dairyGrid.style.gap = '20px';
+
+                dairy.forEach(p => {
+                    dairyGrid.appendChild(createProductCard(p, 'images/dairy.png'));
+                });
+                grid.appendChild(dairySection);
+                grid.appendChild(dairyGrid);
+            }
+
+            // Organic Section
+            if (organic.length > 0) {
+                const organicSection = document.createElement('div');
+                organicSection.innerHTML = `<h3 style="margin: 30px 0 15px; grid-column: 1/-1; color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 5px;">Organic Vegetables & Fruits</h3>`;
+                const organicGrid = document.createElement('div');
+                organicGrid.style.display = 'grid';
+                organicGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
+                organicGrid.style.gap = '20px';
+
+                organic.forEach(p => {
+                    organicGrid.appendChild(createProductCard(p, 'images/organic.png'));
+                });
+                grid.appendChild(organicSection);
+                grid.appendChild(organicGrid);
+            }
         }
+
+        function createProductCard(p, categoryImg) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            const isLowStock = p.quantity <= p.threshold;
+
+            // Use local professional images if available, fallback to LoremFlickr
+            // Improved keyword extraction to find the CORE product name (e.g. "Milk" instead of "Whole")
+            const baseTypes = ['Milk', 'Cheese', 'Butter', 'Yogurt', 'Beef', 'Chicken', 'Pork', 'Lamb', 'Apples', 'Bananas', 'Oranges', 'Grapes', 'Strawberries', 'Blueberries', 'Peaches', 'Tomatoes', 'Potatoes', 'Onions', 'Lettuce', 'Peppers', 'Carrots', 'Cabbage', 'Corn', 'Rice', 'Wheat', 'Oats', 'Barley', 'Rye'];
+            const coreTag = baseTypes.find(t => p.item_name.includes(t)) || 'food';
+
+            const localImg = `images/products/${coreTag.toLowerCase()}.png`;
+            const flickrImg = `https://loremflickr.com/320/240/${coreTag},food,fresh?lock=${p.id}`;
+
+            card.innerHTML = `
+                <div class="product-image-container" style="height: 180px; overflow: hidden;">
+                    <img src="${localImg}" alt="${p.item_name}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s;"
+                         onerror="if(this.src.includes('${localImg}')){ this.src='${flickrImg}'; } else if(this.src.includes('${flickrImg}')){ this.src='${categoryImg}'; this.onerror=null; }">
+                </div>
+                <div class="product-info">
+                    <h4>${p.item_name}</h4>
+                    <p class="category">${p.category}</p>
+                    <div class="product-meta">
+                        <span class="price">$${p.unit_price.toFixed(2)}/${p.unit || 'kg'}</span>
+                        <span class="stock ${isLowStock ? 'low' : ''}">${isLowStock ? 'Low Stock' : 'In Stock'}</span>
+                    </div>
+                    <button onclick='addToCart(${JSON.stringify(p)})' class="btn-buy" style="margin-top: 10px;" ${isLowStock ? 'disabled' : ''}>
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
+            `;
+            return card;
+        }
+
+        // REMOVED: quickSelectProduct and single-order form logic as it's replaced by Cart
+
 
         window.quickSelectProduct = (id, name) => {
             const hiddenInput = document.getElementById('orderProductSelect');

@@ -304,17 +304,28 @@ tr:hover td {
 }
 
 /* Action Buttons */
+/* Action Buttons Container */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
 .btn-action {
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
     border: none;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: all 0.2s;
-    margin-right: 5px;
+    /* margin-right removed in favor of gap */
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    white-space: nowrap;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .btn-edit {

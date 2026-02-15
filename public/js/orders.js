@@ -6,11 +6,11 @@ const createOrderForm = document.getElementById('create-order-form');
 
 // Hierarchical Data for filtering (matching inventory.js)
 const subCategories = {
-    'Organic Vegetable': ['Leafy Vegetables', 'Regular Vegetables', 'Seasonal / Special', 'Seeds & Pulses'],
-    'Dairy Product': ['Milk Products', 'Processed Dairy', 'Value-added Products'],
+    'Organic Vegetable': ['Leafy Vegetables', 'Regular Vegetables', 'Seasonal / Special', 'Seeds & Pulses', 'General'],
+    'Dairy Product': ['Milk Products', 'Processed Dairy', 'Value-added Products', 'General'],
     'Livestock': ['Farm Animals'],
-    'Fruits': ['Seasonal Fruits', 'Exotic Fruits'],
-    'Grains & Crops': ['Organic Grains', 'Cereals']
+    'Fruits': ['Seasonal Fruits', 'Exotic Fruits', 'General'],
+    'Grains & Crops': ['Organic Grains', 'Cereals', 'General']
 };
 
 let currentInventory = [];
@@ -95,8 +95,11 @@ function setupOrderFormLogic() {
                 const targetMain = main.toLowerCase();
                 const targetSub = sub.toLowerCase();
 
+                // If item has no sub-category (length < 2), treat its sub-category as 'general'
+                const itemSub = parts.length > 1 ? parts[1].toLowerCase() : 'general';
+
                 const match = (itemMain === targetMain || itemMain.includes(targetMain) || targetMain.includes(itemMain)) &&
-                    (parts[1] === targetSub);
+                    (itemSub === targetSub);
 
                 return match;
             });
@@ -311,7 +314,7 @@ function renderOrders(orders) {
                 <td style="font-weight: 600;">$${order.total_amount.toFixed(2)}</td>
                 <td>${typeBadge}</td>
                 <td style="font-size: 0.85rem;">${new Date(order.createdAt).toLocaleDateString()}</td>
-                <td style="white-space: nowrap;">${actionsHtml}</td>
+                <td style="white-space: nowrap;"><div class="action-buttons">${actionsHtml}</div></td>
             `;
             pendingTableBody.appendChild(tr);
         } else if (fulfillmentTableBody || ownerFulfillmentBody) {
@@ -324,8 +327,8 @@ function renderOrders(orders) {
                 <td style="font-weight: 600;">$${order.total_amount.toFixed(2)}</td>
                 <td>${typeBadge}</td>
                 <td style="font-size: 0.85rem;">${new Date(order.createdAt).toLocaleDateString()}</td>
-                <td>${statusContent}</td>
-                <td>${actionsHtml}</td>
+                <td><div class="action-buttons">${statusContent}</div></td>
+                <td><div class="action-buttons">${actionsHtml}</div></td>
             `;
             if (fulfillmentTableBody) fulfillmentTableBody.appendChild(tr);
             if (ownerFulfillmentBody) ownerFulfillmentBody.appendChild(tr.cloneNode(true));
@@ -337,7 +340,7 @@ function renderOrders(orders) {
                 <td>$${order.total_amount.toFixed(2)}</td>
                 <td>${statusContent}</td>
                 <td>${new Date(order.createdAt).toLocaleDateString()}</td>
-                <td>${actionsHtml}</td>
+                <td><div class="action-buttons">${actionsHtml}</div></td>
             `;
             ordersTableBody.appendChild(tr);
         }

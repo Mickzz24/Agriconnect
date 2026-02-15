@@ -5,21 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const subCategorySelect = document.getElementById('subCategory');
 
     const subCategories = {
-        'Organic Vegetable': [
-            'Leafy Vegetables',
-            'Regular Vegetables',
-            'Seasonal / Special',
-            'Seeds & Pulses'
-        ],
-        'Dairy Product': [
-            'Milk Products',
-            'Processed Dairy',
-            'Value-added Products'
-        ],
+        'Organic Vegetable': ['Leafy Vegetables', 'Regular Vegetables', 'Seasonal / Special', 'Seeds & Pulses', 'General'],
+        'Dairy Product': ['Milk Products', 'Processed Dairy', 'Value-added Products', 'General'],
         'Livestock': ['Farm Animals'],
-        'Fruits': ['Seasonal Fruits', 'Exotic Fruits'],
-        'Grains & Crops': ['Organic Grains', 'Cereals']
+        'Fruits': ['Seasonal Fruits', 'Exotic Fruits', 'General'],
+        'Grains & Crops': ['Organic Grains', 'Cereals', 'General']
     };
+
 
     const setupFormLogic = (mainId, subId, nameSelectId, nameInputId, expiryFieldId) => {
         const mainEl = document.getElementById(mainId);
@@ -236,8 +228,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="color: #7f8c8d;">${item.threshold}</td>
                 <td>${isDairy ? (item.expiry_date || '<span style="color:#e67e22;">Empty</span>') : '-'}</td>
                 <td>
-                    <button class="btn-action btn-edit" title="Edit" onclick="window.editItem(${item.id})"><i class="fas fa-edit"></i> Edit</button>
-                    <button class="btn-action btn-danger" title="Delete" onclick="window.deleteItem(${item.id})"><i class="fas fa-trash"></i> Delete</button>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-edit" title="Edit" onclick="window.editItem(${item.id})"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn-action btn-danger" title="Delete" onclick="window.deleteItem(${item.id})"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
                 </td>
             `;
             tableBody.appendChild(tr);
@@ -282,8 +276,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><span style="color: #27ae60; font-weight: 600;">$${item.unit_price.toFixed(2)} / ${item.unit || 'kg'}</span></td>
                 <td>${isDairy ? (item.expiry_date || '<span style="color:#e67e22;">Empty</span>') : '-'}</td>
                 <td>
-                    <button class="btn-action btn-edit" onclick="window.editItem(${item.id})"><i class="fas fa-edit"></i> Edit</button>
-                    <button class="btn-action btn-danger" onclick="window.deleteItem(${item.id})"><i class="fas fa-trash"></i> Delete</button>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-edit" onclick="window.editItem(${item.id})"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn-action btn-danger" onclick="window.deleteItem(${item.id})"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
                 </td>
             `;
             tableBody.appendChild(tr);
