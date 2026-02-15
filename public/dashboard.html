@@ -4,9 +4,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriConnect</title>
+    <title>AgriConnect: Business Analytics</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            min-height: 380px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #f0f0f0;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            flex: 1;
+        }
+    </style>
     <link rel="stylesheet" href="dashboard.css">
 </head>
 
@@ -14,8 +41,8 @@
     <div class="sidebar">
         <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
         <div class="menu-item active"><i class="fas fa-home"></i> Dashboard</div>
-        <div class="menu-item"><i class="fas fa-plus-circle"></i> Products</div>
-        <div class="menu-item"><i class="fas fa-boxes"></i> Orders & Inventory</div>
+        <div class="menu-item"><i class="fas fa-shopping-cart"></i> Orders</div>
+        <div class="menu-item"><i class="fas fa-boxes"></i> Inventory</div>
         <div class="menu-item"><i class="fas fa-money-bill-wave"></i> Expenses</div>
         <div class="menu-item"><i class="fas fa-users"></i> Staff & Deliverers</div>
         <div class="menu-item"><i class="fas fa-chart-line"></i> Analytics</div>
@@ -36,6 +63,7 @@
         </div>
 
         <!-- Dashboard Home Section -->
+        <div id="global-alert-container" style="margin-bottom: 20px;"></div>
         <div id="dashboard-section">
             <div class="card-container">
                 <div class="card">
@@ -64,6 +92,28 @@
                 <h2>Verification Status</h2>
                 <p id="statusMsg">Checking authentication...</p>
             </div>
+
+            <!-- Charts Section -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <canvas id="todaySalesChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <canvas id="expenseDistChart"></canvas>
+                </div>
+                <div class="chart-card" style="grid-column: 1 / -1;">
+                    <canvas id="financialOverviewChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <canvas id="weeklySalesChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <canvas id="monthlySalesChart"></canvas>
+                </div>
+                <div class="chart-card" style="grid-column: 1 / -1; height: 500px;">
+                    <canvas id="yearlySalesChart"></canvas>
+                </div>
+            </div>
         </div>
 
         <!-- Products Section -->
@@ -77,15 +127,53 @@
 
             <div id="product-form-card" class="section-container" style="display: none; margin-bottom: 30px;">
                 <h3>Add New Product</h3>
-                <form id="add-inventory-form"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-                    <input type="text" id="itemName" placeholder="Item Name" required>
-                    <input type="text" id="itemCategory" placeholder="Category" required>
-                    <input type="number" id="itemQuantity" placeholder="Quantity" required>
-                    <input type="number" step="0.01" id="itemPrice" placeholder="Price (Selling)" required>
-                    <input type="number" step="0.01" id="itemCost" placeholder="Cost Price">
-                    <input type="number" id="itemThreshold" placeholder="Low Stock Threshold" value="10">
-                    <button type="submit">Add Item</button>
+                <form id="add-inventory-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <select id="mainCategory" required>
+                        <option value="">Select Category...</option>
+                        <option value="Organic Vegetable">Organic Vegetable</option>
+                        <option value="Dairy Product">Dairy Product</option>
+                        <option value="Livestock">Livestock</option>
+                        <option value="Fruits">Fruits</option>
+                        <option value="Grains & Crops">Grains & Crops</option>
+                    </select>
+                    <select id="subCategory" required disabled>
+                        <option value="">Select Sub-Category...</option>
+                    </select>
+                    <div style="grid-column: span 1; display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Status: Item Selection</label>
+                        <select id="itemNameSelect" required disabled>
+                            <option value="">Select Item Name...</option>
+                        </select>
+                        <input type="text" id="itemName" placeholder="Or type custom name..." style="display: none;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Price per unit</label>
+                        <input type="number" step="0.01" id="itemPrice" placeholder="Price" required
+                            style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Unit</label>
+                        <select id="itemUnit" required style="width: 100%;">
+                            <option value="kg">kg</option>
+                            <option value="liter">liter</option>
+                            <option value="piece">piece</option>
+                            <option value="packet">packet</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Stock Quantity</label>
+                        <input type="number" id="itemQuantity" placeholder="Quantity" required style="width: 100%;">
+                    </div>
+                    <div id="expiryField" style="display: none;">
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Expiry Date (Dairy only)</label>
+                        <input type="date" id="itemExpiry" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Min Stock</label>
+                        <input type="number" id="itemThreshold" placeholder="Alert Level" value="10" required
+                            style="width: 100%;">
+                    </div>
+                    <button type="submit" style="grid-column: span 2;">Add Item</button>
                 </form>
             </div>
 
@@ -94,8 +182,14 @@
                 <table id="inventory-table-mgt">
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th>Product Type</th>
                             <th>Category</th>
+                            <th>Product Name</th>
+                            <th>Price per unit</th>
+                            <th>Total Price</th>
+                            <th>Stock Quantity</th>
+                            <th>Minimum Stock</th>
+                            <th>Expiry</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -106,37 +200,77 @@
             </div>
         </div>
 
-        <!-- Orders & Inventory Section -->
-        <div id="orders-section" style="display: none;">
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
-                <button id="toggle-order-form" class="btn-action"
-                    style="background-color: #27ae60; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 600; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);">
-                    <i class="fas fa-plus-circle"></i> Create New Order
+        <!-- Inventory Operations Section -->
+        <div id="inventory-ops-section" style="display: none;">
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-bottom: 20px;">
+                <button id="toggle-stock-form" class="btn-action"
+                    style="background-color: #3498db; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 600; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);">
+                    <i class="fas fa-boxes"></i> Add New Stock
                 </button>
             </div>
 
-            <div id="order-form-card" class="section-container" style="display: none; margin-bottom: 30px;">
-                <h3>Create New Order</h3>
-                <form id="create-order-form"
-                    style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; align-items: end;">
-                    <input type="text" id="customerName" placeholder="Customer Name" required>
-                    <select id="orderProductSelect">
-                        <option value="">Select Product...</option>
+            <div id="quick-stock-form" class="section-container"
+                style="display: none; margin-bottom: 30px; border-top: 4px solid #3498db;">
+                <h3>Add New Stock</h3>
+                <form id="secondary-inventory-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <select id="secMainCategory" required>
+                        <option value="">Select Category...</option>
+                        <option value="Organic Vegetable">Organic Vegetable</option>
+                        <option value="Dairy Product">Dairy Product</option>
                     </select>
-                    <input type="number" id="orderQuantity" placeholder="Qty" min="1" required>
-                    <button type="submit">Create Order</button>
+                    <select id="secSubCategory" required disabled>
+                        <option value="">Select Sub-Category...</option>
+                    </select>
+                    <div style="grid-column: span 1; display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Item Selection</label>
+                        <select id="secItemNameSelect" required disabled>
+                            <option value="">Select Item Name...</option>
+                        </select>
+                        <input type="text" id="secItemName" placeholder="Or type custom name..." style="display: none;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Price per unit</label>
+                        <input type="number" step="0.01" id="secItemPrice" placeholder="Price" required
+                            style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Unit</label>
+                        <select id="secItemUnit" required style="width: 100%;">
+                            <option value="kg">kg</option>
+                            <option value="liter">liter</option>
+                            <option value="piece">piece</option>
+                            <option value="packet">packet</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Stock Quantity</label>
+                        <input type="number" id="secItemQuantity" placeholder="Quantity" required style="width: 100%;">
+                    </div>
+                    <div id="secExpiryField" style="display: none;">
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Expiry Date (Dairy)</label>
+                        <input type="date" id="secItemExpiry" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Min Stock</label>
+                        <input type="number" id="secItemThreshold" placeholder="Alert Level" value="10" required
+                            style="width: 100%;">
+                    </div>
+                    <button type="submit" style="grid-column: span 2; background-color: #3498db;">Add Stock</button>
                 </form>
             </div>
 
+
             <div class="section-container">
-                <h3>Live Inventory & Price Management</h3>
+                <h3>Live Inventory Management</h3>
                 <table id="inventory-table-ops">
                     <thead>
                         <tr>
+                            <th>Product Type</th>
+                            <th>Category</th>
                             <th>Product Name</th>
-                            <th>Available Stock</th>
+                            <th>Stock Level</th>
                             <th>Selling Price</th>
-                            <th>Cost Price</th>
+                            <th>Expiry</th>
                             <th>Mgt Actions</th>
                         </tr>
                     </thead>
@@ -145,7 +279,10 @@
                     </tbody>
                 </table>
             </div>
+        </div>
 
+        <!-- Orders History Section -->
+        <div id="orders-history-section" style="display: none;">
             <div class="section-container">
                 <h3>Order History</h3>
                 <table id="orders-table">
@@ -153,14 +290,16 @@
                         <tr>
                             <th>Order ID</th>
                             <th>Customer</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Amount</th>
                             <th>Type</th>
-                            <th>Status</th>
-                            <th>Total</th>
                             <th>Date</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="orders-table-body">
+                    <tbody id="owner-fulfillment-table-body">
                         <!-- Orders populated from js/orders.js -->
                     </tbody>
                 </table>
@@ -169,22 +308,6 @@
 
         <!-- Expenses Section -->
         <div id="expenses-section" style="display: none;">
-            <div
-                style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;">
-                <h3>Add Expense</h3>
-                <form id="add-expense-form" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                    <input type="text" id="expenseCategory" placeholder="Category (e.g. Rent, Utilities)" required
-                        style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                    <input type="number" step="0.01" id="expenseAmount" placeholder="Amount" required
-                        style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                    <input type="date" id="expenseDate" required
-                        style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                    <input type="text" id="expenseDescription" placeholder="Description"
-                        style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; grid-column: span 3;">
-                    <button type="submit">Add Expense</button>
-                </form>
-            </div>
-
             <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 <h3>Expense History</h3>
                 <table id="expenses-table" style="width: 100%; border-collapse: collapse;">
@@ -247,16 +370,30 @@
         </div>
 
         <!-- Analytics Section -->
-        <div id="analytics-section" style="display: none; padding: 40px; text-align: center; color: #95a5a6;">
-            <!-- Content temporarily removed -->
+        <div id="analytics-section" style="display: none;">
+            <div class="section-container">
+                <h3>AI Sales Forecasting (Next 7 Days)</h3>
+                <div style="display: flex; gap: 20px; margin-bottom: 25px;">
+                    <div
+                        style="flex: 1; background: #f8f9fa; padding: 20px; border-radius: 12px; border-left: 5px solid #8e44ad;">
+                        <h4 style="color: #7f8c8d; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 10px;">
+                            Predicted Sales Trend</h4>
+                        <div id="sales-trend" style="font-size: 1.8rem; font-weight: 700; color: #2c3e50;">Loading...
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container" style="position: relative; height: 400px; width: 100%;">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script src="js/inventory.js"></script>
+    <script src="js/inventory.js?v=1.1"></script>
     <script src="js/orders.js"></script>
     <script src="js/expenses.js"></script>
     <script src="js/users.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/dashboard_charts.js"></script>
     <script src="js/analytics.js"></script>
     <script>
         const token = localStorage.getItem('token');
@@ -271,8 +408,8 @@
         const menuItems = document.querySelectorAll('.menu-item');
         const sections = {
             'Dashboard': document.getElementById('dashboard-section'),
-            'Products': document.getElementById('inventory-section'),
-            'Orders & Inventory': document.getElementById('orders-section'),
+            'Orders': document.getElementById('orders-history-section'),
+            'Inventory': document.getElementById('inventory-ops-section'),
             'Expenses': document.getElementById('expenses-section'),
             'Staff & Deliverers': document.getElementById('users-section'),
             'Analytics': document.getElementById('analytics-section')
@@ -293,14 +430,15 @@
                     sections[text].style.display = 'block';
                     pageTitle.innerText = text;
 
-                    // Trigger data fetch if needed
-                    if (text === 'Products' && typeof fetchInventory === 'function') {
-                        fetchInventory();
+                    if (text === 'Dashboard' && typeof window.initDashboardCharts === 'function') {
+                        window.initDashboardCharts();
                     }
-                    if (text === 'Orders & Inventory' && typeof fetchOrders === 'function') {
+                    if (text === 'Orders' && typeof fetchOrders === 'function') {
                         fetchOrders();
-                        populateProductSelect();
+                    }
+                    if (text === 'Inventory') {
                         if (typeof fetchInventory === 'function') fetchInventory();
+                        populateProductSelect();
                     }
                     if (text === 'Expenses' && typeof fetchExpenses === 'function') {
                         fetchExpenses();
@@ -336,12 +474,22 @@
                 document.getElementById('stat-low-stock').innerText = data.inventory.lowStock;
                 document.getElementById('stat-pending-deliverers').innerText = data.users.pendingDeliverers;
 
+                // Check for alerts immediately
+                if (typeof checkLowStock === 'function') {
+                    const invRes = await fetch('/api/inventory');
+                    const items = await invRes.json();
+                    checkLowStock(items);
+                }
+
             } catch (err) {
                 console.error("Error fetching stats:", err);
             }
         }
 
         fetchStats();
+        if (typeof window.initDashboardCharts === 'function') {
+            window.initDashboardCharts();
+        }
 
         // Verify token with backend
         fetch('/api/user/profile', {
@@ -388,16 +536,6 @@
             });
         }
 
-        const orderToggle = document.getElementById('toggle-order-form');
-        const orderCard = document.getElementById('order-form-card');
-        if (orderToggle && orderCard) {
-            orderToggle.addEventListener('click', () => {
-                const isHidden = orderCard.style.display === 'none';
-                orderCard.style.display = isHidden ? 'block' : 'none';
-                orderToggle.innerHTML = isHidden ? '<i class="fas fa-times"></i> Close Form' : '<i class="fas fa-plus-circle"></i> Create New Order';
-                orderToggle.style.backgroundColor = isHidden ? '#e74c3c' : '#27ae60';
-            });
-        }
     </script>
 </body>
 

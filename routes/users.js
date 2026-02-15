@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models');
 const User = db.User;
+const Order = db.Order;
 const verifyToken = require('../middleware/authMiddleware');
 const bcrypt = require('bcryptjs');
 
@@ -15,6 +16,19 @@ router.get('/', verifyToken, async (req, res) => {
     } catch (err) {
         console.error("Error fetching users:", err);
         res.status(500).send({ message: "Error fetching users." });
+    }
+});
+
+// Get all deliverers
+router.get('/deliverers', verifyToken, async (req, res) => {
+    try {
+        const deliverers = await User.findAll({
+            where: { role: 'deliverer', is_approved: true },
+            attributes: ['id', 'username']
+        });
+        res.json(deliverers);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching deliverers" });
     }
 });
 
@@ -57,6 +71,12 @@ router.put('/:id/status', verifyToken, async (req, res) => {
 // Delete a user (Protected)
 router.delete('/:id', verifyToken, async (req, res) => {
     try {
+        // Check for associated orders
+        const orderCount = await Order.count({ where: { userId: req.params.id } });
+        if (orderCount > 0) {
+            return res.status(400).send({ message: "Cannot delete user with associated orders." });
+        }
+
         const result = await User.destroy({
             where: { id: req.params.id }
         });
@@ -72,4 +92,25 @@ router.delete('/:id', verifyToken, async (req, res) => {
     }
 });
 
+// Update a user (Protected)
+router.put('/:id', verifyToken, async (req, res) => {
+    const { username, email, password, role } = req.body;
+    try {
+        const user = await User.findByPk(req.params.id);
+        if (!user) return res.status(404).send({ message: "User not found." });
+
+        const updateData = { username, email, role };
+        if (password) {
+            updateData.password = bcrypt.hashSync(password, 8);
+        }
+
+        await user.update(updateData);
+        res.status(200).send({ message: "User updated successfully." });
+    } catch (err) {
+        console.error("Error updating user:", err);
+        res.status(500).send({ message: "Error updating user." });
+    }
+});
+
 module.exports = router;
+

@@ -4,7 +4,7 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
     class Expense extends Model {
         static associate(models) {
-            // define association here
+            Expense.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
         }
     }
     Expense.init({
@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
         date: {
             type: DataTypes.DATEONLY,
             defaultValue: DataTypes.NOW
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     }, {
         sequelize,

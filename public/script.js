@@ -48,6 +48,7 @@ registerForm.addEventListener('submit', async (e) => {
         if (data.role === 'owner') window.location.href = '/dashboard.html';
         else if (data.role === 'staff') window.location.href = '/staff.html';
         else if (data.role === 'accountant') window.location.href = '/accountant.html';
+        else if (data.role === 'deliverer') window.location.href = '/deliverer.html';
         else window.location.href = '/user.html';
     } else {
         alert(data.message || 'Registration failed');

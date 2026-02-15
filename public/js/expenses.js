@@ -31,6 +31,9 @@ function renderExpenses(expenses) {
             <td>
                 <button class="btn-action btn-edit" onclick="editExpense(${expense.id})"><i class="fas fa-edit"></i> Edit</button>
                 <button class="btn-action btn-danger" onclick="deleteExpense(${expense.id})"><i class="fas fa-trash"></i> Delete</button>
+                <button class="btn-action" onclick="window.downloadExpenseInvoice(${expense.id})" style="background: #2ecc71; color: white; margin-left: 5px;" title="Invoice">
+                    <i class="fas fa-file-invoice"></i> Invoice
+                </button>
             </td>
         `;
         expensesTableBody.appendChild(tr);
@@ -142,9 +145,80 @@ window.deleteExpense = async function (id) {
             if (typeof fetchStats === 'function') fetchStats();
             if (editingId === id) resetExpenseEditMode();
         } else {
-            alert('Error deleting expense');
+            const result = await response.json();
+            alert(result.message || 'Error deleting expense');
         }
     } catch (err) {
         console.error('Error deleting expense:', err);
+    }
+};
+
+window.downloadExpenseInvoice = async function (id) {
+    if (!window.jspdf) {
+        alert("PDF generator not loaded. Please refresh the page.");
+        return;
+    }
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        const expense = expensesData.find(e => e.id === id);
+        if (!expense) return alert("Expense data not found");
+
+        // --- Header & Branding ---
+        doc.setFontSize(22);
+        doc.setTextColor(39, 174, 96); // AgriConnect Green
+        doc.text("AgriConnect: Organic & Dairy", 105, 20, { align: "center" });
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text("Business operational Expense Receipt", 105, 27, { align: "center" });
+
+        // --- Info ---
+        doc.setDrawColor(200);
+        doc.line(10, 35, 200, 35);
+
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.setFont(undefined, 'bold');
+        doc.text(`EXPENSE VOUCHER: #EXP-${expense.id}`, 10, 45);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Date: ${new Date(expense.date).toLocaleDateString()}`, 150, 45);
+        doc.text(`Category: ${expense.category}`, 10, 55);
+
+        // --- Table of Items ---
+        const tableData = [[
+            expense.category,
+            expense.description || 'No description provided',
+            `$${expense.amount.toFixed(2)}`
+        ]];
+
+        doc.autoTable({
+            startY: 65,
+            head: [['Category', 'Description', 'Amount']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: [39, 174, 96] }, // AgriConnect Green header
+            margin: { top: 10 }
+        });
+
+        // --- Summary ---
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text(`Total Expense: $${expense.amount.toFixed(2)}`, 150, finalY);
+
+        // --- Footer ---
+        doc.setFontSize(9);
+        doc.setTextColor(150);
+        doc.text("This is a computer generated document for internal record keeping.", 105, 280, { align: "center" });
+
+        // Save
+        doc.save(`AgriConnect_Expense_Voucher_${expense.id}.pdf`);
+
+    } catch (err) {
+        console.error('Error generating voucher:', err);
+        alert('Failed to generate expense voucher.');
     }
 };
