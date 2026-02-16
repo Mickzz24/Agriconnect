@@ -136,7 +136,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
                         try {
                             const owners = await db.User.findAll({ where: { role: 'owner' } });
                             if (owners && owners.length > 0) {
-                                const sendLowStockAlert = require('../utils/emailService');
+                                const { sendLowStockAlert } = require('../utils/emailService');
                                 for (const owner of owners) {
                                     if (owner.email) {
                                         sendLowStockAlert(product, owner.email).catch(err => console.error(`Alert error for ${owner.email}:`, err));

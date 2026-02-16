@@ -21,7 +21,9 @@ window.fetchOrders = async function () {
         const response = await fetch('/api/orders', {
             headers: { 'Authorization': localStorage.getItem('token') }
         });
-        const orders = await response.json();
+        const data = await response.json();
+        // Sort by id descending to show latest at the top
+        const orders = data.sort((a, b) => b.id - a.id);
         renderOrders(orders);
     } catch (err) {
         console.error('Error fetching orders:', err);
@@ -84,8 +86,7 @@ function setupOrderFormLogic() {
             const filtered = currentInventory.filter(item => {
                 const category = (item.category || '').toLowerCase();
                 const parts = category.split(' - ').map(p => p.trim());
-
-                if (parts.length < 2) return false;
+                const itemName = (item.item_name || '').toLowerCase();
 
                 // Normalize "Organic Vegetable" and "Organic Products"
                 let itemMain = parts[0];
@@ -95,13 +96,40 @@ function setupOrderFormLogic() {
                 const targetMain = main.toLowerCase();
                 const targetSub = sub.toLowerCase();
 
-                // If item has no sub-category (length < 2), treat its sub-category as 'general'
-                const itemSub = parts.length > 1 ? parts[1].toLowerCase() : 'general';
+                const matchMain = (itemMain === targetMain || itemMain.includes(targetMain) || targetMain.includes(itemMain));
 
-                const match = (itemMain === targetMain || itemMain.includes(targetMain) || targetMain.includes(itemMain)) &&
-                    (itemSub === targetSub);
+                // If item has a sub-category, it must match
+                if (parts.length >= 2) {
+                    return matchMain && parts[1].toLowerCase() === targetSub;
+                }
 
-                return match;
+                // If item has NO sub-category, attempt keyword-based matching or 'General' catch-all
+                if (matchMain) {
+                    if (targetSub === 'general') return true;
+
+                    // Keyword mapping for fuzzy matching (aligned with sub-categories)
+                    const keywords = {
+                        'leafy vegetables': ['spinach', 'coriander', 'fenugreek', 'lettuce', 'cabbage', 'mint', 'kale', 'palak', 'methi'],
+                        'regular vegetables': ['tomato', 'potato', 'onion', 'eggplant', 'brinjal', 'cauliflower', 'carrot', 'peas', 'capsicum', 'radish', 'okra', 'lady finger', 'beans', 'chilli', 'ginger', 'garlic', 'beetroot'],
+                        'seasonal / special': ['pumpkin', 'gourd', 'corn', 'cucumber', 'broccoli', 'mushroom', 'sweet potato', 'corn'],
+                        'seeds & pulses': ['dal', 'seeds', 'pulses', 'lentils', 'gram'],
+                        'milk products': ['milk', 'dairy', 'buffalo', 'cow'],
+                        'processed dairy': ['paneer', 'curd', 'cheese', 'butter', 'yogurt', 'cream', 'mozzarella', 'cheddar'],
+                        'value-added products': ['ghee', 'khoya', 'mawa', 'butter milk', 'lassi', 'shrikhand'],
+                        'farm animals': ['lamb', 'beef', 'pork', 'chicken', 'goat', 'mutton', 'hen', 'duck'],
+                        'seasonal fruits': ['apple', 'banana', 'orange', 'grape', 'mango', 'blueberry', 'strawberry', 'peach', 'plum', 'pear'],
+                        'exotic fruits': ['kiwi', 'pineapple', 'watermelon', 'dragon fruit', 'avocado', 'pomegranate', 'papaya'],
+                        'organic grains': ['rice', 'wheat', 'barley', 'rye', 'oats', 'millet', 'corn', 'quinoa'],
+                        'cereals': ['millet', 'sorghum', 'ragi', 'bajra', 'jowar']
+                    };
+
+                    const subKeywords = keywords[targetSub];
+                    if (subKeywords && subKeywords.some(k => itemName.includes(k))) {
+                        return true;
+                    }
+                }
+
+                return false;
             });
 
             console.log(`DEBUG: Found ${filtered.length} matching products`);
@@ -249,21 +277,21 @@ function renderOrders(orders) {
         if (userRole === 'owner' || userRole === 'staff') {
             if (order.status === 'Pending') {
                 actionsHtml = `
-                    <button class="btn-action" onclick="window.approveOrder(${order.id})" style="background: #27ae60; color: white; margin-right: 5px;" title="Approve">
+                    <button class="btn-action btn-approve" onclick="window.approveOrder(${order.id})" title="Approve">
                         <i class="fas fa-check"></i> Approve
                     </button>
-                    <button class="btn-action" onclick="window.updateOrderStatus(${order.id}, 'Cancelled')" style="background: #e74c3c; color: white;" title="Reject">
+                    <button class="btn-action btn-danger" onclick="window.updateOrderStatus(${order.id}, 'Cancelled')" title="Reject">
                         <i class="fas fa-times"></i> Reject
                     </button>`;
             } else {
                 actionsHtml = `
-                    <button class="btn-action" onclick="window.deleteOrder(${order.id})" style="background: #e74c3c; color: white;" title="Delete">
+                    <button class="btn-action btn-danger" onclick="window.deleteOrder(${order.id})" title="Delete">
                         <i class="fas fa-trash"></i> Delete
                     </button>`;
 
                 if (order.status === 'Delivered') {
                     actionsHtml += `
-                    <button class="btn-action" onclick="window.downloadInvoice(${order.id})" style="background: #2ecc71; color: white; margin-left: 5px;" title="Invoice">
+                    <button class="btn-action btn-approve" onclick="window.downloadInvoice(${order.id})" title="Invoice">
                         <i class="fas fa-file-invoice"></i> Invoice
                     </button>`;
                 }
@@ -272,9 +300,9 @@ function renderOrders(orders) {
             const isShipped = order.status === 'Shipped' || order.status === 'Delivered';
             actionsHtml = `
                 <button class="btn-action btn-view" title="Track" onclick="window.trackOrder(${order.id})"><i class="fas fa-search-location"></i> Track</button>
-                <button class="btn-action" title="Download Invoice" 
+                <button class="btn-action ${isShipped ? 'btn-edit' : ''}" title="Download Invoice" 
                         onclick="window.downloadInvoice(${order.id})" 
-                        style="background: ${isShipped ? '#3498db' : '#bdc3c7'}; color: white; cursor: ${isShipped ? 'pointer' : 'not-allowed'};" 
+                        style="cursor: ${isShipped ? 'pointer' : 'not-allowed'};" 
                         ${isShipped ? '' : 'disabled'}>
                     <i class="fas fa-file-invoice"></i> Invoice
                 </button>`;
@@ -484,17 +512,17 @@ window.downloadInvoice = async function (id) {
     }
 
     try {
-        const { jsPDF } = window.jspdf;
+        const jsPDF = window.jspdf.jsPDF || window.jspdf;
         const doc = new jsPDF();
 
-        // Fetch full order details (to get items)
+        // Fetch orders to find the specific one
         const response = await fetch('/api/orders', {
             headers: { 'Authorization': localStorage.getItem('token') }
         });
         const orders = await response.json();
-        const order = orders.find(o => o.id === id);
+        const order = orders.find(o => o.id == id); // Loose comparison for string/number safety
 
-        if (!order) return alert("Order not found");
+        if (!order) return alert("Order data not found. Please try refreshing.");
 
         // --- Header & Branding ---
         doc.setFontSize(22);
@@ -523,35 +551,48 @@ window.downloadInvoice = async function (id) {
             item.Inventory ? item.Inventory.item_name : 'Item',
             `${item.quantity} ${item.Inventory ? (item.Inventory.unit || 'kg') : 'kg'}`,
             `$${(item.price || 0).toFixed(2)}`,
-            `$${(item.quantity * item.price).toFixed(2)}`
+            `$${(item.quantity * (item.price || 0)).toFixed(2)}`
         ]);
 
-        doc.autoTable({
-            startY: 65,
-            head: [['Product Name', 'Quantity', 'Unit Price', 'Total']],
-            body: tableData,
-            theme: 'striped',
-            headStyles: { fillColor: [39, 174, 96] }, // AgriConnect Green header
-            margin: { top: 10 }
-        });
+        if (doc.autoTable) {
+            doc.autoTable({
+                startY: 65,
+                head: [['Product Name', 'Quantity', 'Unit Price', 'Total']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: { fillColor: [39, 174, 96] },
+                margin: { top: 10 }
+            });
+        } else {
+            // Fallback if autoTable plugin fails to attach
+            let currentY = 75;
+            doc.setFont(undefined, 'bold');
+            doc.text('Product Name', 10, 70);
+            doc.text('Total', 170, 70);
+            doc.setFont(undefined, 'normal');
+            tableData.forEach(row => {
+                doc.text(row[0], 10, currentY);
+                doc.text(row[3], 170, currentY);
+                currentY += 8;
+            });
+        }
 
         // --- Summary ---
-        const finalY = doc.lastAutoTable.finalY + 10;
+        const finalY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 150) + 10;
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
-        doc.text(`Grand Total: $${order.total_amount.toFixed(2)}`, 150, finalY);
+        doc.text(`Grand Total: $${(order.total_amount || 0).toFixed(2)}`, 150, finalY);
 
         // --- Footer ---
         doc.setFontSize(9);
         doc.setTextColor(150);
         doc.text("Thank you for choosing AgriConnect!", 105, 280, { align: "center" });
 
-        // Save
         doc.save(`AgriConnect_Invoice_${order.id}.pdf`);
 
     } catch (err) {
         console.error('Error generating invoice:', err);
-        alert('Failed to generate invoice. Please try again.');
+        alert('Failed to generate invoice: ' + err.message);
     }
 };
 

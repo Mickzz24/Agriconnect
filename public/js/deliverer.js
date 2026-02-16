@@ -13,7 +13,8 @@ window.fetchDelivererStats = async function () {
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-        const orders = await response.json();
+        const data = await response.json();
+        const orders = (Array.isArray(data) ? data : []).sort((a, b) => b.id - a.id);
         if (!Array.isArray(orders)) {
             console.error("Orders is not an array:", orders);
             return;
@@ -80,7 +81,8 @@ window.fetchDeliveries = async function () {
 
         if (!response.ok) throw new Error("Failed to fetch deliveries");
 
-        const orders = await response.json();
+        const data = await response.json();
+        const orders = (Array.isArray(data) ? data : []).sort((a, b) => b.id - a.id);
         const tbody = document.getElementById('deliveries-table-body');
         if (!tbody) return;
 
@@ -96,9 +98,9 @@ window.fetchDeliveries = async function () {
 
             let actionBtn = '';
             if (o.status === 'Packed') {
-                actionBtn = `<button class="btn-action" style="background: #3498db; color: white; border:none; padding: 8px 15px; border-radius: 5px; cursor: pointer;" onclick="window.updateDeliveryStatus(${o.id}, 'Shipped')">Start Delivery</button>`;
+                actionBtn = `<button class="btn-action btn-edit" onclick="window.updateDeliveryStatus(${o.id}, 'Shipped')">Start Delivery</button>`;
             } else if (o.status === 'Shipped') {
-                actionBtn = `<button class="btn-action" style="background: #27ae60; color: white; border:none; padding: 8px 15px; border-radius: 5px; cursor: pointer;" onclick="window.updateDeliveryStatus(${o.id}, 'Delivered')">Mark Delivered</button>`;
+                actionBtn = `<button class="btn-action btn-approve" onclick="window.updateDeliveryStatus(${o.id}, 'Delivered')">Mark Delivered</button>`;
             } else {
                 actionBtn = `<span style="color: #bdc3c7; font-style: italic;">No Action</span>`;
             }

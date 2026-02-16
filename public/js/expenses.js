@@ -12,7 +12,9 @@ window.fetchExpenses = async function () {
         const response = await fetch('/api/expenses', {
             headers: { 'Authorization': localStorage.getItem('token') }
         });
-        expensesData = await response.json();
+        const data = await response.json();
+        // Sort by id descending to show latest at the top
+        expensesData = data.sort((a, b) => b.id - a.id);
         renderExpenses(expensesData);
     } catch (err) {
         console.error('Error fetching expenses:', err);
@@ -29,11 +31,13 @@ function renderExpenses(expenses) {
             <td>${new Date(expense.date).toLocaleDateString()}</td>
             <td class="text-danger fw-bold">-$${expense.amount.toFixed(2)}</td>
             <td>
-                <button class="btn-action btn-edit" onclick="editExpense(${expense.id})"><i class="fas fa-edit"></i> Edit</button>
-                <button class="btn-action btn-danger" onclick="deleteExpense(${expense.id})"><i class="fas fa-trash"></i> Delete</button>
-                <button class="btn-action" onclick="window.downloadExpenseInvoice(${expense.id})" style="background: #2ecc71; color: white; margin-left: 5px;" title="Invoice">
-                    <i class="fas fa-file-invoice"></i> Invoice
-                </button>
+                <div class="action-buttons">
+                    <button class="btn-action btn-edit" onclick="editExpense(${expense.id})"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="btn-action btn-danger" onclick="deleteExpense(${expense.id})"><i class="fas fa-trash"></i> Delete</button>
+                    <button class="btn-action btn-approve" onclick="window.downloadExpenseInvoice(${expense.id})" title="Invoice">
+                        <i class="fas fa-file-invoice"></i> Invoice
+                    </button>
+                </div>
             </td>
         `;
         expensesTableBody.appendChild(tr);
@@ -100,7 +104,6 @@ window.editExpense = function (id) {
     editingId = id;
     if (submitBtn) {
         submitBtn.innerText = 'Update Expense';
-        submitBtn.innerText = 'Update Expense';
     }
 
     if (!document.getElementById('btn-cancel-expense-edit')) {
@@ -122,7 +125,6 @@ window.editExpense = function (id) {
 function resetExpenseEditMode() {
     editingId = null;
     if (submitBtn) {
-        submitBtn.innerText = 'Add Expense';
         submitBtn.innerText = 'Add Expense';
     }
     const cancelBtn = document.getElementById('btn-cancel-expense-edit');
@@ -160,10 +162,10 @@ window.downloadExpenseInvoice = async function (id) {
     }
 
     try {
-        const { jsPDF } = window.jspdf;
+        const jsPDF = window.jspdf.jsPDF || window.jspdf;
         const doc = new jsPDF();
 
-        const expense = expensesData.find(e => e.id === id);
+        const expense = expensesData.find(e => e.id == id);
         if (!expense) return alert("Expense data not found");
 
         // --- Header & Branding ---
@@ -187,27 +189,31 @@ window.downloadExpenseInvoice = async function (id) {
         doc.text(`Date: ${new Date(expense.date).toLocaleDateString()}`, 150, 45);
         doc.text(`Category: ${expense.category}`, 10, 55);
 
-        // --- Table of Items ---
+        // --- Table ---
         const tableData = [[
             expense.category,
             expense.description || 'No description provided',
-            `$${expense.amount.toFixed(2)}`
+            `$${(expense.amount || 0).toFixed(2)}`
         ]];
 
-        doc.autoTable({
-            startY: 65,
-            head: [['Category', 'Description', 'Amount']],
-            body: tableData,
-            theme: 'striped',
-            headStyles: { fillColor: [39, 174, 96] }, // AgriConnect Green header
-            margin: { top: 10 }
-        });
+        if (doc.autoTable) {
+            doc.autoTable({
+                startY: 65,
+                head: [['Category', 'Description', 'Amount']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: { fillColor: [39, 174, 96] }, // AgriConnect Green header
+                margin: { top: 10 }
+            });
+        } else {
+            doc.text(`${expense.category}: $${(expense.amount || 0).toFixed(2)}`, 10, 75);
+        }
 
         // --- Summary ---
-        const finalY = doc.lastAutoTable.finalY + 10;
+        const finalY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 100) + 10;
         doc.setFontSize(14);
         doc.setFont(undefined, 'bold');
-        doc.text(`Total Expense: $${expense.amount.toFixed(2)}`, 150, finalY);
+        doc.text(`Total Expense: $${(expense.amount || 0).toFixed(2)}`, 150, finalY);
 
         // --- Footer ---
         doc.setFontSize(9);
@@ -219,6 +225,6 @@ window.downloadExpenseInvoice = async function (id) {
 
     } catch (err) {
         console.error('Error generating voucher:', err);
-        alert('Failed to generate expense voucher.');
+        alert('Failed to generate expense voucher: ' + err.message);
     }
 };

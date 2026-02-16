@@ -7,6 +7,8 @@
     <title>AgriConnect - User Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="dashboard.css">
 </head>
 
@@ -92,8 +94,17 @@
         <!-- Browse & Order Section -->
         <div id="browse-order-section" style="display: none;">
             <div class="section-container" style="margin-bottom: 30px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
                     <h3>Available Farm Products</h3>
+                    <div id="filter-controls"
+                        style="display: flex; gap: 10px; background: #fff; padding: 5px; border-radius: 12px; border: 1px solid #eee;">
+                        <button class="filter-btn active" onclick="filterShop('all')" id="filter-all">All</button>
+                        <button class="filter-btn" onclick="filterShop('organic')" id="filter-organic"><i
+                                class="fas fa-leaf"></i> Organic</button>
+                        <button class="filter-btn" onclick="filterShop('dairy')" id="filter-dairy"><i
+                                class="fas fa-cheese"></i> Dairy</button>
+                    </div>
                     <div id="product-stats" style="display: flex; gap: 15px;">
                         <span class="stat-badge organic"><i class="fas fa-leaf"></i> Organic: <span
                                 id="total-organic">0</span></span>
@@ -193,7 +204,7 @@
                     pageTitle.innerText = text;
 
                     if (text === 'Products') {
-                        fetchInventory();
+                        updateStats(); // Refresh inventory and render shop
                         if (typeof populateProductSelect === 'function') populateProductSelect();
                     }
                     if (text === 'Order History') {
@@ -274,6 +285,9 @@
         };
 
         // User Profile & Stats Logic
+        let globalProducts = [];
+        let currentFilter = 'all';
+
         async function updateStats() {
             try {
                 // Fetch profile
@@ -285,34 +299,50 @@
 
                 // Fetch orders for summary
                 const response = await fetch('/api/orders', { headers: { 'Authorization': token } });
-                const orders = await response.json();
+                const data = await response.json();
+                const orders = (Array.isArray(data) ? data : []).sort((a, b) => b.id - a.id);
 
                 populateRecentOrder(orders);
                 populateActiveStatus(orders);
 
                 // Fetch inventory for recommendations
                 const invRes = await fetch('/api/inventory');
-                const products = await invRes.json();
+                globalProducts = await invRes.json();
 
-                populateRecommendations(products);
-                renderUserShop(products);
+                populateRecommendations(globalProducts);
+                renderUserShop(globalProducts, currentFilter);
             } catch (err) { console.error(err); }
         }
 
+        window.filterShop = (type) => {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`filter-${type}`).classList.add('active');
+            renderUserShop(globalProducts, type);
+        };
+
         function populateRecentOrder(orders) {
             const container = document.getElementById('recent-order-content');
-            if (orders.length === 0) return;
+            if (!container) return;
+            if (!Array.isArray(orders) || orders.length === 0) {
+                container.innerHTML = '<div class="no-data-msg">No recent orders found.</div>';
+                return;
+            }
 
             const latest = orders[0];
             const date = new Date(latest.createdAt).toLocaleDateString();
+            const itemName = (latest.items && latest.items.length > 0 && latest.items[0].Inventory)
+                ? latest.items[0].Inventory.item_name
+                : 'Custom Order';
+
             container.innerHTML = `
                 <div class="summary-item">
                     <div class="summary-info">
                         <strong>Order #${latest.id}</strong>
-                        <p>${latest.items ? latest.items[0].Inventory.item_name : 'Custom Order'}</p>
+                        <p>${itemName}</p>
                     </div>
                     <div class="summary-meta">
-                        <span class="price">$${latest.total_amount.toFixed(2)}</span>
+                        <span class="price">$${(latest.total_amount || 0).toFixed(2)}</span>
                         <span class="date">${date}</span>
                     </div>
                 </div>
@@ -364,52 +394,79 @@
             });
         }
 
-        function renderUserShop(products) {
+        function renderUserShop(products, filter = 'all') {
             const grid = document.getElementById('user-product-grid');
             const totalOrganicEl = document.getElementById('total-organic');
             const totalDairyEl = document.getElementById('total-dairy');
             if (!grid) return;
 
-            const organic = products.filter(p => p.category.toLowerCase().includes('organic') || p.category.toLowerCase().includes('vegetable') || p.category.toLowerCase().includes('fruit'));
-            const dairy = products.filter(p => p.category.toLowerCase().includes('dairy'));
+            if (!Array.isArray(products)) {
+                console.error("Products is not an array:", products);
+                grid.innerHTML = '<div class="no-data-msg">Unable to load products.</div>';
+                return;
+            }
+
+            // Safer filtering using string conversion
+            const getCat = (p) => String(p.category || "").toLowerCase();
+
+            const organic = products.filter(p => {
+                const c = getCat(p);
+                return c.includes('organic') || c.includes('vegetable') || c.includes('fruit') || c.includes('leafy');
+            });
+
+            const dairy = products.filter(p => getCat(p).includes('dairy'));
+
+            // Catch-all for anything else
+            const others = products.filter(p => !organic.includes(p) && !dairy.includes(p));
 
             if (totalOrganicEl) totalOrganicEl.innerText = organic.length;
             if (totalDairyEl) totalDairyEl.innerText = dairy.length;
 
             grid.innerHTML = '';
-            grid.style.display = 'block'; // Reset grid display to block to allow sections
+            grid.style.display = 'block';
 
-            // Dairy Section
-            if (dairy.length > 0) {
-                const dairySection = document.createElement('div');
-                dairySection.innerHTML = `<h3 style="margin: 20px 0 15px; grid-column: 1/-1; color: #f39c12; border-bottom: 2px solid #f39c12; padding-bottom: 5px;">Fresh Dairy Products</h3>`;
-                const dairyGrid = document.createElement('div');
-                dairyGrid.style.display = 'grid';
-                dairyGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
-                dairyGrid.style.gap = '20px';
-
-                dairy.forEach(p => {
-                    dairyGrid.appendChild(createProductCard(p, 'images/dairy.png'));
-                });
-                grid.appendChild(dairySection);
-                grid.appendChild(dairyGrid);
+            if (products.length === 0) {
+                grid.innerHTML = '<div class="no-data-msg">No products currently available from our farms.</div>';
+                return;
             }
 
-            // Organic Section
-            if (organic.length > 0) {
-                const organicSection = document.createElement('div');
-                organicSection.innerHTML = `<h3 style="margin: 30px 0 15px; grid-column: 1/-1; color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 5px;">Organic Vegetables & Fruits</h3>`;
-                const organicGrid = document.createElement('div');
-                organicGrid.style.display = 'grid';
-                organicGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
-                organicGrid.style.gap = '20px';
+            const renderSection = (items, title, color, img) => {
+                if (items.length === 0) return;
 
-                organic.forEach(p => {
-                    organicGrid.appendChild(createProductCard(p, 'images/organic.png'));
+                const sectionHeader = document.createElement('div');
+                sectionHeader.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; margin: 30px 0 15px; border-bottom: 2px solid ${color}; padding-bottom: 8px;">
+                        <h3 style="margin: 0; color: ${color};">${title}</h3>
+                        <span style="background: ${color}; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.8rem;">${items.length} Items</span>
+                    </div>
+                `;
+
+                const subGrid = document.createElement('div');
+                subGrid.style.display = 'grid';
+                subGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+                subGrid.style.gap = '25px';
+                subGrid.style.marginBottom = '40px';
+
+                items.forEach(p => {
+                    subGrid.appendChild(createProductCard(p, img));
                 });
-                grid.appendChild(organicSection);
-                grid.appendChild(organicGrid);
+
+                grid.appendChild(sectionHeader);
+                grid.appendChild(subGrid);
+            };
+
+            // Apply filter logic
+            if (filter === 'all' || filter === 'organic') {
+                renderSection(organic, 'Organic Vegetables & Fruits', '#27ae60', 'images/organic.png');
             }
+            if (filter === 'all' || filter === 'dairy') {
+                renderSection(dairy, 'Fresh Dairy Products', '#f39c12', 'images/dairy.png');
+            }
+            if (filter === 'all' && others.length > 0) {
+                renderSection(others, 'Other Farm Produce', '#7f8c8d', 'images/organic.png');
+            }
+
+            console.log(`DEBUG: Rendered ${organic.length} organic, ${dairy.length} dairy, ${others.length} others.`);
         }
 
         function createProductCard(p, categoryImg) {
@@ -720,7 +777,49 @@
             font-size: 0.85rem;
         }
 
-        /* Existing Styles */
+        /* Filter Buttons Style */
+        .filter-btn {
+            background: none;
+            border: none;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #7f8c8d;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-btn i {
+            font-size: 1rem;
+        }
+
+        .filter-btn.active {
+            background: #27ae60;
+            color: white;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2);
+        }
+
+        .filter-btn:not(.active):hover {
+            background: #f8f9fa;
+            color: #27ae60;
+        }
+
+        #filter-organic.active {
+            background: #27ae60;
+        }
+
+        #filter-dairy.active {
+            background: #f39c12;
+        }
+
+        #filter-all.active {
+            background: #34495e;
+        }
+
         .stat-badge {
             padding: 5px 15px;
             border-radius: 50px;

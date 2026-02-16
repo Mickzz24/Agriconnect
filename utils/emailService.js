@@ -37,4 +37,23 @@ const sendLowStockAlert = async (product, ownerEmail) => {
     }
 };
 
-module.exports = sendLowStockAlert;
+const sendReportEmail = async (to, subject, html, attachments) => {
+    const mailOptions = {
+        from: 'agriconnect.alerts@gmail.com',
+        to: to,
+        subject: subject,
+        html: html,
+        attachments: attachments // Array of { filename, content }
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Report email sent to ${to}`);
+        return true;
+    } catch (error) {
+        console.error('Error sending report email:', error);
+        return false;
+    }
+};
+
+module.exports = { sendLowStockAlert, sendReportEmail };

@@ -389,7 +389,8 @@
         async function renderPaymentTable() {
             try {
                 const response = await fetch('/api/orders', { headers: { 'Authorization': token } });
-                const orders = await response.json();
+                const data = await response.json();
+                const orders = (Array.isArray(data) ? data : []).sort((a, b) => b.id - a.id);
                 const tbody = document.getElementById('payments-body');
                 tbody.innerHTML = '';
 
@@ -406,88 +407,17 @@
                             </span>
                         </td>
                         <td>
-                            <button onclick="window.generateInvoice(${o.id})" 
+                            <button onclick="window.downloadInvoice(${o.id})" 
                                 class="btn-action" 
                                 style="background: ${isDelivered ? '#3498db' : '#bdc3c7'}; color: white; cursor: ${isDelivered ? 'pointer' : 'not-allowed'};"
                                 ${!isDelivered ? 'disabled' : ''}>
-                                ${isDelivered ? 'Generate Invoice' : 'Locked'}
+                                ${isDelivered ? 'Download Invoice' : 'Locked'}
                             </button>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
             } catch (err) { console.error(err); }
-        }
-
-        window.generateInvoice = async (id) => {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            try {
-                // Fetch full order details (to get items)
-                const response = await fetch('/api/orders', { headers: { 'Authorization': token } });
-                const orders = await response.json();
-                const order = orders.find(o => o.id === id);
-
-                if (!order) return alert("Order not found");
-
-                // --- Header & Branding ---
-                doc.setFontSize(22);
-                doc.setTextColor(39, 174, 96); // AgriConnect Green
-                doc.text("AgriConnect: Organic & Dairy", 105, 20, { align: "center" });
-
-                doc.setFontSize(10);
-                doc.setTextColor(100);
-                doc.text("Fresh from our Farm to your Family", 105, 27, { align: "center" });
-
-                // --- Invoice Info ---
-                doc.setDrawColor(200);
-                doc.line(10, 35, 200, 35);
-
-                doc.setFontSize(12);
-                doc.setTextColor(0);
-                doc.setFont(undefined, 'bold');
-                doc.text(`INVOICE: #INV-${order.id}`, 10, 45);
-                doc.setFont(undefined, 'normal');
-                doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 150, 45);
-                doc.text(`Customer: ${order.customer_name}`, 10, 52);
-                doc.text(`Order Type: ${order.order_type || 'Offline'}`, 10, 59);
-
-                // --- Table of Items ---
-                const tableData = (order.items || []).map(item => [
-                    item.Inventory ? item.Inventory.item_name : 'Item',
-                    `${item.quantity} ${item.Inventory ? (item.Inventory.unit || 'kg') : 'kg'}`,
-                    `$${item.price.toFixed(2)}`,
-                    `$${(item.quantity * item.price).toFixed(2)}`
-                ]);
-
-                doc.autoTable({
-                    startY: 65,
-                    head: [['Product Name', 'Quantity', 'Unit Price', 'Total']],
-                    body: tableData,
-                    theme: 'striped',
-                    headStyles: { fillColor: [39, 174, 96] },
-                    margin: { top: 10 }
-                });
-
-                // --- Summary ---
-                const finalY = doc.lastAutoTable.finalY + 10;
-                doc.setFontSize(14);
-                doc.setFont(undefined, 'bold');
-                doc.text(`Grand Total: $${order.total_amount.toFixed(2)}`, 150, finalY);
-
-                // --- Footer ---
-                doc.setFontSize(9);
-                doc.setTextColor(150);
-                doc.setFont(undefined, 'italic');
-                doc.text("Thank you for supporting organic farming!", 105, 280, { align: "center" });
-
-                doc.save(`Invoice_AgriConnect_${order.id}.pdf`);
-
-            } catch (err) {
-                console.error("PDF Production Error:", err);
-                alert("Failed to generate PDF. Please check console.");
-            }
         }
 
         function checkStockNotifications() {

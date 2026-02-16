@@ -19,7 +19,7 @@
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-            min-height: 380px;
+            min-height: 300px;
             display: flex;
             flex-direction: column;
             border: 1px solid rgba(0, 0, 0, 0.02);
@@ -129,13 +129,14 @@
     <div class="sidebar">
         <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
         <div class="menu-item active" onclick="switchSection('Dashboard')"><i class="fas fa-home"></i> Dashboard</div>
-        <div class="menu-item" onclick="switchSection('Revenue')"><i class="fas fa-money-bill-wave"></i> Revenue</div>
+
         <div class="menu-item" onclick="switchSection('Expenses')"><i class="fas fa-file-invoice-dollar"></i> Expenses
         </div>
         <div class="menu-item" onclick="switchSection('Payments')"><i class="fas fa-credit-card"></i> Payments</div>
         <div class="menu-item" onclick="switchSection('Reports')"><i class="fas fa-file-pdf"></i> Reports</div>
         <div class="menu-item" onclick="switchSection('Profit Summary')"><i class="fas fa-calculator"></i> Profit
             Summary</div>
+        <div class="menu-item" onclick="switchSection('Analytics')"><i class="fas fa-chart-line"></i> Analytics</div>
     </div>
 
     <div class="main-content">
@@ -180,7 +181,7 @@
                 <div class="chart-card">
                     <canvas id="expenseDistChart"></canvas>
                 </div>
-                <div class="chart-card" style="grid-column: 1 / -1;">
+                <div class="chart-card">
                     <canvas id="financialOverviewChart"></canvas>
                 </div>
                 <div class="chart-card">
@@ -189,45 +190,13 @@
                 <div class="chart-card">
                     <canvas id="monthlySalesChart"></canvas>
                 </div>
-                <!-- Adding Yearly explicitly too -->
-                <div class="chart-card">
+                <div class="chart-card" style="grid-column: 1 / -1; height: 350px; min-height: 350px;">
                     <canvas id="yearlySalesChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Revenue Section -->
-        <div id="revenue-section" style="display: none;">
-            <div class="section-container">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>Revenue Stream</h3>
-                    <button class="btn-prime" onclick="downloadReport('Revenue', 'csv')"><i class="fas fa-download"></i>
-                        Export CSV</button>
-                </div>
-                <div class="table-controls">
-                    <input type="text" id="revenueSearch" placeholder="Search Order ID..." onkeyup="filterRevenue()">
-                    <select id="revenueDateFilter" onchange="filterRevenue()">
-                        <option value="all">All Time</option>
-                        <option value="daily">Today Only</option>
-                        <option value="weekly">This Week</option>
-                        <option value="monthly">This Month</option>
-                    </select>
-                </div>
-                <table id="orders-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer Name</th>
-                            <th>Payment Mode</th>
-                            <th>Amount</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="revenue-table-body"></tbody>
-                </table>
-            </div>
-        </div>
+
 
         <!-- Expenses Section -->
         <div id="expenses-section" style="display: none;">
@@ -258,6 +227,8 @@
             <div class="section-container">
                 <h3>Transaction Verification</h3>
                 <div class="table-controls">
+                    <button class="btn-prime" style="background:#34495e" onclick="loadPayments('All')">All
+                        Transactions</button>
                     <button class="btn-prime" style="background:#2ecc71" onclick="loadPayments('Paid')">Paid
                         Orders</button>
                     <button class="btn-prime" style="background:#3498db" onclick="loadPayments('COD')">COD
@@ -287,23 +258,56 @@
         <div id="reports-section" style="display: none;">
             <div class="section-container">
                 <h3>Financial Reports Center</h3>
-                <div class="table-controls">
-                    <label>From: <input type="date" id="reportStart"></label>
-                    <label>To: <input type="date" id="reportEnd"></label>
+                <div class="table-controls" style="justify-content: flex-start;">
+                    <label style="font-weight: 600; color: #34495e;">Select Date: <input type="date" id="reportDate"
+                            style="margin-left: 10px;"></label>
                 </div>
                 <div class="report-grid">
                     <div class="report-item">
-                        <h4>Daily Sales Report</h4>
-                        <p>Detailed sales breakdown for specific dates.</p>
-                        <div style="margin-top: 15px; display: flex; gap: 10px;">
-                            <button onclick="downloadReport('Daily', 'pdf')" class="btn-prime">PDF</button>
-                            <button onclick="downloadReport('Daily', 'csv')" class="btn-prime"
-                                style="background: #34495e;">CSV</button>
+                        <h4>Sales Reports</h4>
+                        <p>Generate sales breakdown for different periods.</p>
+                        <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 500; font-size: 0.9rem;">Daily:</span>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="downloadReport('Daily', 'pdf')" class="btn-prime"
+                                        style="padding: 5px 12px; font-size: 0.8rem;">PDF</button>
+                                    <button onclick="downloadReport('Daily', 'csv')" class="btn-prime"
+                                        style="background: #34495e; padding: 5px 12px; font-size: 0.8rem;">CSV</button>
+                                    <button onclick="emailReport('Daily', 'csv')" class="btn-prime"
+                                        style="background: #e67e22; padding: 5px 12px; font-size: 0.8rem;"
+                                        title="Email to Owner"><i class="fas fa-envelope"></i></button>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 500; font-size: 0.9rem;">Weekly:</span>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="downloadReport('Weekly', 'pdf')" class="btn-prime"
+                                        style="padding: 5px 12px; font-size: 0.8rem;">PDF</button>
+                                    <button onclick="downloadReport('Weekly', 'csv')" class="btn-prime"
+                                        style="background: #34495e; padding: 5px 12px; font-size: 0.8rem;">CSV</button>
+                                    <button onclick="emailReport('Weekly', 'csv')" class="btn-prime"
+                                        style="background: #e67e22; padding: 5px 12px; font-size: 0.8rem;"
+                                        title="Email to Owner"><i class="fas fa-envelope"></i></button>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 500; font-size: 0.9rem;">Monthly:</span>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="downloadReport('Monthly', 'pdf')" class="btn-prime"
+                                        style="padding: 5px 12px; font-size: 0.8rem;">PDF</button>
+                                    <button onclick="downloadReport('Monthly', 'csv')" class="btn-prime"
+                                        style="background: #34495e; padding: 5px 12px; font-size: 0.8rem;">CSV</button>
+                                    <button onclick="emailReport('Monthly', 'csv')" class="btn-prime"
+                                        style="background: #e67e22; padding: 5px 12px; font-size: 0.8rem;"
+                                        title="Email to Owner"><i class="fas fa-envelope"></i></button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="report-item">
                         <h4>Profit & Loss Report</h4>
-                        <p>Summary of net earnings after expenses.</p>
+                        <p>Summary of net earnings after expenses for the selected date's month.</p>
                         <div style="margin-top: 15px; display: flex; gap: 10px;">
                             <button onclick="downloadReport('PL', 'pdf')" class="btn-prime">PDF</button>
                             <button onclick="downloadReport('PL', 'csv')" class="btn-prime"
@@ -312,7 +316,7 @@
                     </div>
                     <div class="report-item">
                         <h4>Expense Breakdown</h4>
-                        <p>Categorized operational spending report.</p>
+                        <p>Categorized operational spending for the selected date's month.</p>
                         <div style="margin-top: 15px; display: flex; gap: 10px;">
                             <button onclick="downloadReport('Expense', 'pdf')" class="btn-prime">PDF</button>
                             <button onclick="downloadReport('Expense', 'csv')" class="btn-prime"
@@ -347,6 +351,31 @@
                     </div>
                     <div class="chart-card">
                         <canvas id="profitGrowthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="analytics-section" style="display: none;">
+            <div class="section-container" style="background: transparent; box-shadow: none; padding: 0;">
+                <div id="ai-insights-container">
+                    <div class="insight-card sales">
+                        <h4>Next Month Predicted Sales</h4>
+                        <div class="value">Loading...</div>
+                    </div>
+                    <div class="insight-card profit">
+                        <h4>Next Month Predicted Profit</h4>
+                        <div class="value">Loading...</div>
+                    </div>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="analytics-chart-card">
+                        <canvas id="analyticsTrendChart"></canvas>
+                    </div>
+                    <div class="analytics-chart-card">
+                        <canvas id="analyticsForecastChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -391,6 +420,7 @@
     </div>
 
     <script src="js/dashboard_charts.js"></script>
+    <script src="js/analytics.js"></script>
     <script src="js/accountant.js"></script>
 </body>
 

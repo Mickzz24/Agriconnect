@@ -219,12 +219,47 @@ router.get('/charts', verifyToken, async (req, res) => {
             raw: true
         });
 
+        // 6. Monthly Performance Grouped by Weeks (last 28 days)
+        const monthlyWeeklyStats = [];
+        const todayForWeekly = new Date(today);
+        todayForWeekly.setHours(23, 59, 59, 999);
+
+        for (let i = 0; i < 4; i++) {
+            const end = new Date(todayForWeekly);
+            end.setDate(todayForWeekly.getDate() - (i * 7));
+            const start = new Date(end);
+            start.setDate(end.getDate() - 6);
+            start.setHours(0, 0, 0, 0);
+
+            const rev = await Order.sum('total_amount', {
+                where: {
+                    createdAt: { [Op.between]: [start.toISOString(), end.toISOString()] },
+                    status: { [Op.ne]: 'Cancelled' }
+                }
+            }) || 0;
+
+            const exp = await Expense.sum('amount', {
+                where: {
+                    date: { [Op.between]: [start.toISOString().split('T')[0], end.toISOString().split('T')[0]] }
+                }
+            }) || 0;
+
+            monthlyWeeklyStats.push({
+                week: `Week ${4 - i}`,
+                revenue: parseFloat(rev),
+                expenses: parseFloat(exp),
+                profit: parseFloat(rev) - parseFloat(exp)
+            });
+        }
+        monthlyWeeklyStats.reverse();
+
         res.json({
             todaySales,
-            weeklySales: weeklySalesData, // Array of {day, amount}
-            monthlySales: monthlySalesData, // Array of {day, amount}
-            yearlySales: yearlySalesData, // Array of {month, amount}
-            expenseDistribution, // Array of {category, total}
+            weeklySales: weeklySalesData,
+            monthlySales: monthlySalesData,
+            yearlySales: yearlySalesData,
+            expenseDistribution,
+            monthlyWeeklyStats,
             financialOverview: {
                 revenue: revByMonth,
                 expenses: expByMonth
@@ -234,6 +269,113 @@ router.get('/charts', verifyToken, async (req, res) => {
     } catch (err) {
         console.error("Error fetching chart data:", err);
         res.status(500).json({ message: "Error fetching chart data" });
+    }
+});
+
+// Email Report Endpoint
+router.post('/email-report', verifyToken, async (req, res) => {
+    try {
+        const { reportType, format, selectedDate } = req.body;
+
+        if (!selectedDate) {
+            return res.status(400).json({ message: "Date is required" });
+        }
+
+        const { sendReportEmail } = require('../utils/emailService');
+
+        // Find all owners
+        const owners = await User.findAll({ where: { role: 'owner' } });
+        if (!owners || owners.length === 0) {
+            return res.status(404).json({ message: "No owners found to send report" });
+        }
+
+        const date = new Date(selectedDate);
+        let start, end, reportTitle;
+
+        // Determine date range
+        if (reportType === 'Daily') {
+            start = new Date(date);
+            end = new Date(date);
+            reportTitle = `Daily Sales Report (${start.toLocaleDateString()})`;
+        } else if (reportType === 'Weekly') {
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            start = new Date(date.setDate(diff));
+            end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            reportTitle = `Weekly Sales Report (${start.toLocaleDateString()} - ${end.toLocaleDateString()})`;
+        } else if (reportType === 'Monthly' || reportType === 'PL' || reportType === 'Expense') {
+            start = new Date(date.getFullYear(), date.getMonth(), 1);
+            end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            const monthName = start.toLocaleString('default', { month: 'long' });
+            reportTitle = `${reportType === 'PL' ? 'Profit & Loss' : reportType === 'Expense' ? 'Expense' : 'Monthly Sales'} Report - ${monthName} ${start.getFullYear()}`;
+        }
+
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+
+        // Fetch orders
+        const orders = await Order.findAll({
+            where: {
+                createdAt: { [Op.between]: [start, end] }
+            }
+        });
+
+        if (orders.length === 0) {
+            return res.status(404).json({ message: "No data found for the selected period" });
+        }
+
+        let attachment;
+        const total = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+
+        if (format === 'csv') {
+            let csv = 'ID,Customer,Amount,Status,Date\n';
+            orders.forEach(o => csv += `${o.id},${o.customer_name},${o.total_amount},${o.status},${new Date(o.createdAt).toLocaleDateString()}\n`);
+            csv += `\nTotal Revenue,$${total.toFixed(2)}`;
+
+            attachment = {
+                filename: `${reportType}_Report_${selectedDate}.csv`,
+                content: csv
+            };
+        } else {
+            // Generate PDF (simplified - in production use jsPDF on server)
+            return res.status(400).json({ message: "PDF email not yet implemented server-side. Please use CSV format." });
+        }
+
+        // Send email to all owners
+        const emailHtml = `
+            <h2>AgriConnect Financial Report</h2>
+            <p>Dear Owner,</p>
+            <p>Please find attached the <strong>${reportTitle}</strong> generated on ${new Date().toLocaleString()}.</p>
+            <h3>Summary:</h3>
+            <ul>
+                <li><strong>Total Orders:</strong> ${orders.length}</li>
+                <li><strong>Total Revenue:</strong> $${total.toFixed(2)}</li>
+            </ul>
+            <p>Best regards,<br/>AgriConnect System</p>
+        `;
+
+        let emailsSent = 0;
+        for (const owner of owners) {
+            if (owner.email) {
+                const sent = await sendReportEmail(
+                    owner.email,
+                    `AgriConnect: ${reportTitle}`,
+                    emailHtml,
+                    [attachment]
+                );
+                if (sent) emailsSent++;
+            }
+        }
+
+        res.json({
+            message: `Report sent successfully to ${emailsSent} owner(s)`,
+            emailsSent
+        });
+
+    } catch (err) {
+        console.error("Error sending report email:", err);
+        res.status(500).json({ message: "Error sending report email" });
     }
 });
 

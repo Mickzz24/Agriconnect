@@ -121,7 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const isHidden = secFormCard.style.display === 'none';
             secFormCard.style.display = isHidden ? 'block' : 'none';
             secToggleBtn.innerHTML = isHidden ? '<i class="fas fa-times"></i> Close Form' : '<i class="fas fa-boxes"></i> Add New Stock';
-            secToggleBtn.style.backgroundColor = isHidden ? '#e74c3c' : '#3498db';
+            secToggleBtn.className = isHidden ? 'btn-logout' : 'btn-prime'; // Re-use standard button classes for consistency
+            if (isHidden) {
+                secToggleBtn.style.background = 'linear-gradient(45deg, #ff6b6b, #ee5253)';
+                secToggleBtn.style.boxShadow = '0 4px 15px rgba(238, 82, 83, 0.3)';
+            } else {
+                secToggleBtn.style.background = ''; // Reset to dashboard.css default
+                secToggleBtn.style.boxShadow = '';
+            }
         });
     }
 
@@ -132,8 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.fetchInventory = async function () {
         try {
             const response = await fetch('/api/inventory');
-            inventoryData = await response.json();
-            console.log('DEBUG: Inventory Data Received:', inventoryData);
+            const data = await response.json();
+            // Sort by id descending to show latest at the top
+            inventoryData = data.sort((a, b) => b.id - a.id);
+            console.log('DEBUG: Inventory Data Received (Sorted):', inventoryData);
             renderTable(inventoryData);
         } catch (error) {
             console.error('Error fetching inventory:', error);
@@ -455,7 +464,8 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.display = 'block';
             if (toggleBtn) {
                 toggleBtn.innerHTML = '<i class="fas fa-times"></i> Close Form';
-                toggleBtn.style.backgroundColor = '#e74c3c';
+                toggleBtn.className = 'btn-logout';
+                toggleBtn.style.background = 'linear-gradient(45deg, #ff6b6b, #ee5253)';
             }
         }
 

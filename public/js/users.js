@@ -34,8 +34,9 @@
             }
 
             const data = await response.json();
-            _usersData = Array.isArray(data) ? data : [];
-            console.log(`Loaded ${_usersData.length} users`);
+            // Sort by id descending to show latest at top
+            _usersData = (Array.isArray(data) ? data : []).sort((a, b) => b.id - a.id);
+            console.log(`Loaded ${_usersData.length} users (Sorted)`);
             window.renderUsers(_usersData);
         } catch (err) {
             console.error('Error fetching users:', err);
@@ -61,7 +62,7 @@
                 : '<span style="color: #e67e22; font-weight: 600;"><i class="fas fa-clock"></i> Pending</span>';
 
             const approveBtn = (user.role !== 'owner')
-                ? `<button class="btn-action" onclick="window.toggleApproval(${user.id}, ${!user.is_approved})" style="background: ${user.is_approved ? '#f39c12' : '#27ae60'}; color: white; margin-bottom: 5px; min-width: 110px;">
+                ? `<button class="btn-action ${user.is_approved ? 'btn-suspend' : 'btn-approve'}" onclick="window.toggleApproval(${user.id}, ${!user.is_approved})" title="${user.is_approved ? 'Suspend User' : 'Approve User'}">
                     <i class="fas ${user.is_approved ? 'fa-user-slash' : 'fa-user-check'}"></i> ${user.is_approved ? 'Suspend' : 'Approve'}
                    </button>`
                 : '';
