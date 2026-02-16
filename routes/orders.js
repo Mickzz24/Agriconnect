@@ -9,7 +9,16 @@ const verifyToken = require('../middleware/authMiddleware');
 // Get all orders (with items)
 router.get('/', verifyToken, async (req, res) => {
     try {
+        const whereClause = {};
+        // Role-based filtering
+        if (req.userRole === 'deliverer') {
+            whereClause.delivererId = req.userId;
+        } else if (req.userRole !== 'owner' && req.userRole !== 'staff') {
+            whereClause.userId = req.userId;
+        }
+
         const orders = await Order.findAll({
+            where: whereClause,
             include: [{
                 model: OrderItem,
                 as: 'items',
@@ -26,7 +35,8 @@ router.get('/', verifyToken, async (req, res) => {
 
 // Create new order
 router.post('/', verifyToken, async (req, res) => {
-    const { customer_name, items } = req.body; // items: [{ inventoryId, quantity }]
+    const { customer_name, items, status, order_type } = req.body;
+    console.log("Creating order with body:", req.body);
 
     if (!items || items.length === 0) {
         return res.status(400).json({ message: "Order must contain items" });
@@ -36,6 +46,7 @@ router.post('/', verifyToken, async (req, res) => {
 
     try {
         let total_amount = 0;
+        const targetStatus = status || (req.userRole === 'user' ? 'Pending' : 'Delivered');
 
         // Calculate total and verify stock
         for (const item of items) {
@@ -44,6 +55,7 @@ router.post('/', verifyToken, async (req, res) => {
                 await t.rollback();
                 return res.status(404).json({ message: `Product ID ${item.inventoryId} not found` });
             }
+            // Always check stock regardless of deduction status
             if (product.quantity < item.quantity) {
                 await t.rollback();
                 return res.status(400).json({ message: `Insufficient stock for ${product.item_name}` });
@@ -53,12 +65,15 @@ router.post('/', verifyToken, async (req, res) => {
 
         // Create Order
         const newOrder = await Order.create({
-            customer_name,
+            userId: req.userId,
+            customer_name: customer_name || 'Customer',
             total_amount,
-            status: 'Pending'
+            status: targetStatus,
+            payment_method: req.body.payment_method, // Added payment method
+            order_type: order_type || (req.userRole === 'user' ? 'Online' : 'Offline')
         }, { transaction: t });
 
-        // Create Order Items and Update Inventory
+        // Create Order Items and Update Inventory (ONLY IF NOT PENDING)
         for (const item of items) {
             const product = await Inventory.findByPk(item.inventoryId);
 
@@ -69,10 +84,12 @@ router.post('/', verifyToken, async (req, res) => {
                 price: product.unit_price
             }, { transaction: t });
 
-            // Deduct stock
-            await product.update({
-                quantity: product.quantity - item.quantity
-            }, { transaction: t });
+            // Deduct stock ONLY if status is NOT 'Pending'
+            if (targetStatus !== 'Pending') {
+                await product.update({
+                    quantity: product.quantity - item.quantity
+                }, { transaction: t });
+            }
         }
 
         await t.commit();
@@ -87,16 +104,118 @@ router.post('/', verifyToken, async (req, res) => {
 
 // Update order status
 router.put('/:id/status', verifyToken, async (req, res) => {
-    const { status } = req.body;
+    const { status, delivererId } = req.body;
+    const t = await db.sequelize.transaction();
     try {
-        const order = await Order.findByPk(req.params.id);
-        if (!order) return res.status(404).json({ message: "Order not found" });
+        const order = await Order.findByPk(req.params.id, {
+            include: [{ model: OrderItem, as: 'items' }]
+        });
+        if (!order) {
+            await t.rollback();
+            return res.status(404).json({ message: "Order not found" });
+        }
 
-        await order.update({ status });
+        const oldStatus = order.status;
+        const updates = { status };
+
+        // --- Logic based on status transitions ---
+
+        // 1. DEDUCT STOCK: When moving from Pending to (Packed / Shipped / Delivered)
+        if (oldStatus === 'Pending' && ['Packed', 'Shipped', 'Delivered'].includes(status)) {
+            for (const item of order.items) {
+                const product = await Inventory.findByPk(item.inventoryId);
+                if (product) {
+                    if (product.quantity < item.quantity) {
+                        await t.rollback();
+                        return res.status(400).json({ message: `Insufficient stock to pack order: ${product.item_name}` });
+                    }
+                    await product.update({ quantity: product.quantity - item.quantity }, { transaction: t });
+
+                    // Check for Low Stock after deduction
+                    if (product.quantity <= product.threshold) {
+                        try {
+                            const owners = await db.User.findAll({ where: { role: 'owner' } });
+                            if (owners && owners.length > 0) {
+                                const { sendLowStockAlert } = require('../utils/emailService');
+                                for (const owner of owners) {
+                                    if (owner.email) {
+                                        sendLowStockAlert(product, owner.email).catch(err => console.error(`Alert error for ${owner.email}:`, err));
+                                    }
+                                }
+                            } else {
+                                console.warn('Low stock alert triggered, but no owner found to email.');
+                            }
+                        } catch (e) {
+                            console.error('Failed to trigger alert:', e);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. RESTORE STOCK: When Cancelling after items were already packed/deducted
+        if (status === 'Cancelled' && ['Packed', 'Shipped', 'Delivered'].includes(oldStatus)) {
+            for (const item of order.items) {
+                const product = await Inventory.findByPk(item.inventoryId);
+                if (product) {
+                    await product.update({ quantity: product.quantity + item.quantity }, { transaction: t });
+                }
+            }
+        }
+
+        // 3. SHIPPED: Assign deliverer
+        if (status === 'Shipped') {
+            updates.delivererId = delivererId || req.userId; // Default to current user if none provided
+        }
+
+        // 4. DELIVERED: Add completion time
+        if (status === 'Delivered') {
+            updates.deliveryTime = new Date();
+        }
+
+        await order.update(updates, { transaction: t });
+        await t.commit();
         res.json({ message: "Order status updated", status });
     } catch (err) {
+        await t.rollback();
         console.error("Error updating order:", err);
         res.status(500).json({ message: "Error updating order" });
+    }
+});
+
+// Delete order and recover stock
+router.delete('/:id', verifyToken, async (req, res) => {
+    const t = await db.sequelize.transaction();
+    try {
+        const order = await Order.findByPk(req.params.id, {
+            include: [{ model: OrderItem, as: 'items' }]
+        });
+        if (!order) {
+            await t.rollback();
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        // Recover stock if order wasn't already cancelled (since Cancelled already recovered it)
+        // AND if order wasn't Pending (since Pending never deducted it)
+        if (order.status !== 'Cancelled' && order.status !== 'Pending') {
+            for (const item of order.items) {
+                const product = await Inventory.findByPk(item.inventoryId);
+                if (product) {
+                    await product.update({ quantity: product.quantity + item.quantity }, { transaction: t });
+                }
+            }
+        }
+
+        // Delete items first (due to FK)
+        await OrderItem.destroy({ where: { orderId: order.id }, transaction: t });
+        await order.destroy({ transaction: t });
+
+        await t.commit();
+        res.json({ message: "Order deleted and stock recovered" });
+    } catch (err) {
+        await t.rollback();
+        console.error("Error deleting order:", err);
+        res.status(500).json({ message: "Error deleting order" });
     }
 });
 

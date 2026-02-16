@@ -30,6 +30,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.FLOAT,
             allowNull: false
         },
+        unit: {
+            type: DataTypes.STRING,
+            defaultValue: 'kg'
+        },
         cost_price: {
             type: DataTypes.FLOAT,
             defaultValue: 0.0
@@ -37,6 +41,10 @@ module.exports = (sequelize, DataTypes) => {
         threshold: {
             type: DataTypes.INTEGER,
             defaultValue: 10
+        },
+        expiry_date: {
+            type: DataTypes.DATEONLY,
+            allowNull: true
         }
     }, {
         sequelize,

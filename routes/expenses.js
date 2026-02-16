@@ -8,6 +8,7 @@ const verifyToken = require('../middleware/authMiddleware');
 router.get('/', verifyToken, async (req, res) => {
     try {
         const expenses = await Expense.findAll({
+            include: [{ model: db.User, as: 'user', attributes: ['username'] }],
             order: [['date', 'DESC'], ['createdAt', 'DESC']]
         });
         res.json(expenses);
@@ -26,7 +27,8 @@ router.post('/', verifyToken, async (req, res) => {
             category,
             amount,
             description,
-            date: date || new Date()
+            date: date || new Date(),
+            userId: req.userId
         });
         res.status(201).json(newExpense);
     } catch (err) {
@@ -52,4 +54,25 @@ router.delete('/:id', verifyToken, async (req, res) => {
     }
 });
 
+// Update expense
+router.put('/:id', verifyToken, async (req, res) => {
+    const { category, amount, description, date } = req.body;
+    try {
+        const expense = await Expense.findByPk(req.params.id);
+        if (!expense) return res.status(404).json({ message: "Expense not found" });
+
+        await expense.update({
+            category,
+            amount,
+            description,
+            date: date || expense.date
+        });
+        res.json(expense);
+    } catch (err) {
+        console.error("Error updating expense:", err);
+        res.status(400).json({ message: "Error updating expense" });
+    }
+});
+
 module.exports = router;
+

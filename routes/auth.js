@@ -24,9 +24,12 @@ router.post('/register', async (req, res) => {
 
         // Create token provided upon registration success for immediate login
         const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY, { expiresIn: 86400 }); // 24 hours
-        res.status(200).send({ auth: true, token: token });
+        res.status(200).send({ auth: true, token: token, role: user.role });
     } catch (err) {
         console.error("Error registering user:", err);
+        if (err.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).send({ message: "Username or Email already exists." });
+        }
         return res.status(500).send({ message: "Error registering user." });
     }
 });
@@ -43,7 +46,7 @@ router.post('/login', async (req, res) => {
         if (!passwordIsValid) return res.status(401).send({ auth: false, token: null });
 
         const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY, { expiresIn: 86400 }); // 24 hours
-        res.status(200).send({ auth: true, token: token });
+        res.status(200).send({ auth: true, token: token, role: user.role });
     } catch (err) {
         console.error("Error logging in:", err);
         return res.status(500).send({ message: "Error on the server." });

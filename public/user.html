@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriConnect - User Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="menu-item active"><i class="fas fa-home"></i> Dashboard</div>
+        <div class="menu-item"><i class="fas fa-leaf"></i> Products</div>
+        <div class="menu-item"><i class="fas fa-history"></i> Order History</div>
+        <div class="menu-item"><i class="fas fa-truck"></i> Track Status</div>
+        <div class="menu-item"><i class="fas fa-credit-card"></i> Make Payments</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 id="page-title">Welcome to AgriConnect</h1>
+            <div style="display: flex; align-items: center;">
+                <div id="userDisplay" class="user-badge">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName">Loading...</span>
+                    <span id="userRole" class="role-label"></span>
+                </div>
+                <button class="btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Home Section -->
+        <div id="dashboard-section">
+            <div class="welcome-banner">
+                <div class="banner-text">
+                    <h2 id="welcome-message">Welcome back!</h2>
+                    <p>Discover fresh organic and dairy products from our local farms.</p>
+                </div>
+                <div class="banner-icon">
+                    <i class="fas fa-sun"></i>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Recent Order Summary -->
+                <div class="dashboard-card" id="recent-order-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-history"></i> Recent Order</h3>
+                        <a href="#" onclick="document.querySelector('.menu-item:nth-child(3)').click()"
+                            style="color: #3498db; font-size: 0.8rem; text-decoration: none;">View All</a>
+                    </div>
+                    <div id="recent-order-content" class="card-body">
+                        <div class="no-data-msg">No recent orders found.</div>
+                    </div>
+                </div>
+
+                <!-- Active Order Status -->
+                <div class="dashboard-card" id="active-status-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-truck"></i> Current Status</h3>
+                    </div>
+                    <div id="active-status-content" class="card-body">
+                        <div class="no-data-msg">No active deliveries.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommended Products Row -->
+            <div class="discovery-section">
+                <h3>Recommended for You</h3>
+                <div class="rec-grid" id="recommendations-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Today's Offers -->
+            <div class="offers-banner">
+                <div class="offer-tag">TODAY'S OFFER</div>
+                <div class="offer-content">
+                    <h4>Get 10% Off on All Dairy Products!</h4>
+                    <p>Use code <strong>FARM10</strong> at checkout for fresh dairy delights.</p>
+                </div>
+                <button class="btn-shop" onclick="document.querySelector('.menu-item:nth-child(2)').click()">Shop
+                    Now</button>
+            </div>
+        </div>
+
+        <!-- Browse & Order Section -->
+        <div id="browse-order-section" style="display: none;">
+            <div class="section-container" style="margin-bottom: 30px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <h3>Available Farm Products</h3>
+                    <div id="filter-controls"
+                        style="display: flex; gap: 10px; background: #fff; padding: 5px; border-radius: 12px; border: 1px solid #eee;">
+                        <button class="filter-btn active" onclick="filterShop('all')" id="filter-all">All</button>
+                        <button class="filter-btn" onclick="filterShop('organic')" id="filter-organic"><i
+                                class="fas fa-leaf"></i> Organic</button>
+                        <button class="filter-btn" onclick="filterShop('dairy')" id="filter-dairy"><i
+                                class="fas fa-cheese"></i> Dairy</button>
+                    </div>
+                    <div id="product-stats" style="display: flex; gap: 15px;">
+                        <span class="stat-badge organic"><i class="fas fa-leaf"></i> Organic: <span
+                                id="total-organic">0</span></span>
+                        <span class="stat-badge dairy"><i class="fas fa-cheese"></i> Dairy: <span
+                                id="total-dairy">0</span></span>
+                    </div>
+                </div>
+
+                <div id="user-product-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Direct Order Form Removed in favor of Cart Modal -->
+            <!-- <div class="section-container" id="order-form-container" ... > ... </div> -->
+        </div>
+
+        <!-- Order History Section -->
+        <div id="history-section" style="display: none;">
+            <div class="section-container">
+                <h3>My Previous Orders</h3>
+                <table id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Track Status Section -->
+        <div id="track-section" style="display: none;">
+            <div class="section-container">
+                <h3>Delivery Status</h3>
+                <div id="track-content" style="padding: 20px; text-align: center; color: #7f8c8d;">
+                    <i class="fas fa-search-location" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <p>Select an order from history to track its live status.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Section -->
+        <div id="payments-section" style="display: none;">
+            <div class="section-container">
+                <h3>Payment Gateway</h3>
+                <div
+                    style="background: #fdf6ed; border-left: 5px solid #f39c12; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <strong>Note:</strong> You can pay for 'Pending' orders here.
+                </div>
+                <div style="text-align: center; padding: 40px; color: #95a5a6;">
+                    <i class="fas fa-wallet" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <p>No outstanding payments found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/inventory.js"></script>
+    <script src="js/orders.js"></script>
+    <script src="js/cart.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (!token || role !== 'user') {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Navigation Logic
+        const menuItems = document.querySelectorAll('.menu-item');
+        const sections = {
+            'Dashboard': document.getElementById('dashboard-section'),
+            'Products': document.getElementById('browse-order-section'),
+            'Order History': document.getElementById('history-section'),
+            'Track Status': document.getElementById('track-section'),
+            'Make Payments': document.getElementById('payments-section')
+        };
+        const pageTitle = document.getElementById('page-title');
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const text = item.innerText.trim();
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                if (sections[text]) {
+                    Object.values(sections).forEach(sec => sec.style.display = 'none');
+                    sections[text].style.display = 'block';
+                    pageTitle.innerText = text;
+
+                    if (text === 'Products') {
+                        updateStats(); // Refresh inventory and render shop
+                        if (typeof populateProductSelect === 'function') populateProductSelect();
+                    }
+                    if (text === 'Order History') {
+                        fetchOrders();
+                    }
+                    if (text === 'Make Payments') {
+                        renderPayments();
+                    }
+                }
+            });
+        });
+
+        // Helper for programmatic navigation
+        window.navigateToSection = (text) => {
+            const target = Array.from(menuItems).find(i => i.innerText.trim() === text);
+            if (target) target.click();
+        };
+
+        async function renderPayments() {
+            const paySection = document.getElementById('payments-section');
+            const container = paySection.querySelector('.section-container');
+
+            try {
+                const response = await fetch('/api/orders', { headers: { 'Authorization': token } });
+                const orders = await response.json();
+                const pending = orders.filter(o => o.status === 'Pending');
+
+                let html = `<h3>Payment Gateway</h3>
+                            <div style="background: #fdf6ed; border-left: 5px solid #f39c12; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                                <strong>Note:</strong> You can pay for 'Pending' orders here.
+                            </div>`;
+
+                if (pending.length === 0) {
+                    html += `<div style="text-align: center; padding: 40px; color: #95a5a6;">
+                                <i class="fas fa-wallet" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                                <p>No outstanding payments found.</p>
+                             </div>`;
+                } else {
+                    html += `<table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="text-align: left; border-bottom: 2px solid #eee;">
+                                        <th style="padding: 10px;">Order</th>
+                                        <th style="padding: 10px;">Amount</th>
+                                        <th style="padding: 10px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                    pending.forEach(o => {
+                        html += `<tr style="border-bottom: 1px solid #f9f9f9;">
+                                    <td style="padding: 10px;">Order #${o.id}</td>
+                                    <td style="padding: 10px;">$${o.total_amount.toFixed(2)}</td>
+                                    <td style="padding: 10px;">
+                                        <button onclick="mockPayment(${o.id})" style="background: #27ae60; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">Pay Now</button>
+                                    </td>
+                                 </tr>`;
+                    });
+                    html += `</tbody></table>`;
+                }
+                container.innerHTML = html;
+            } catch (err) { console.error(err); }
+        }
+
+        window.mockPayment = async (id) => {
+            alert(`Simulating payment for Order #${id}... success!`);
+            try {
+                const res = await fetch(`/api/orders/${id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({ status: 'Paid' })
+                });
+                if (res.ok) {
+                    renderPayments();
+                }
+            } catch (err) { console.error('Payment update error:', err); }
+        };
+
+        // User Profile & Stats Logic
+        let globalProducts = [];
+        let currentFilter = 'all';
+
+        async function updateStats() {
+            try {
+                // Fetch profile
+                const profileRes = await fetch('/api/user/profile', { headers: { 'Authorization': token } });
+                const profileData = await profileRes.json();
+                document.getElementById('userName').innerText = profileData.username;
+                document.getElementById('userRole').innerText = profileData.role;
+                document.getElementById('welcome-message').innerText = `Welcome back, ${profileData.username}!`;
+
+                // Fetch orders for summary
+                const response = await fetch('/api/orders', { headers: { 'Authorization': token } });
+                const data = await response.json();
+                const orders = (Array.isArray(data) ? data : []).sort((a, b) => b.id - a.id);
+
+                populateRecentOrder(orders);
+                populateActiveStatus(orders);
+
+                // Fetch inventory for recommendations
+                const invRes = await fetch('/api/inventory');
+                globalProducts = await invRes.json();
+
+                populateRecommendations(globalProducts);
+                renderUserShop(globalProducts, currentFilter);
+            } catch (err) { console.error(err); }
+        }
+
+        window.filterShop = (type) => {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`filter-${type}`).classList.add('active');
+            renderUserShop(globalProducts, type);
+        };
+
+        function populateRecentOrder(orders) {
+            const container = document.getElementById('recent-order-content');
+            if (!container) return;
+            if (!Array.isArray(orders) || orders.length === 0) {
+                container.innerHTML = '<div class="no-data-msg">No recent orders found.</div>';
+                return;
+            }
+
+            const latest = orders[0];
+            const date = new Date(latest.createdAt).toLocaleDateString();
+            const itemName = (latest.items && latest.items.length > 0 && latest.items[0].Inventory)
+                ? latest.items[0].Inventory.item_name
+                : 'Custom Order';
+
+            container.innerHTML = `
+                <div class="summary-item">
+                    <div class="summary-info">
+                        <strong>Order #${latest.id}</strong>
+                        <p>${itemName}</p>
+                    </div>
+                    <div class="summary-meta">
+                        <span class="price">$${(latest.total_amount || 0).toFixed(2)}</span>
+                        <span class="date">${date}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function populateActiveStatus(orders) {
+            const container = document.getElementById('active-status-content');
+            const active = orders.find(o => ['Pending', 'Packed', 'Shipped'].includes(o.status));
+
+            if (!active) return;
+
+            container.innerHTML = `
+                <div class="status-widget">
+                    <div class="status-badge-inline ${active.status.toLowerCase()}">${active.status}</div>
+                    <p>Order #${active.id} is currently <strong>${active.status}</strong></p>
+                    <button onclick="document.querySelector('.menu-item:nth-child(4)').click()" class="btn-track-slim">Track Order</button>
+                </div>
+            `;
+        }
+
+        function populateRecommendations(products) {
+            const grid = document.getElementById('recommendations-grid');
+            if (!grid) return;
+
+            // Pick 3 diverse products
+            const sample = products.slice(0, 3);
+            grid.innerHTML = '';
+            sample.forEach(p => {
+                const isDairy = p.category.toLowerCase().includes('dairy');
+                const imgSrc = isDairy ? 'images/dairy.png' : 'images/organic.png';
+
+                const div = document.createElement('div');
+                div.className = 'rec-card';
+                div.innerHTML = `
+                    <div style="height: 120px; overflow: hidden; border-radius: 8px; margin-bottom: 10px;">
+                        <img src="${imgSrc}" alt="${p.item_name}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <span style="font-weight: 600; color: #2c3e50;">${p.item_name}</span>
+                `;
+                div.onclick = () => {
+                    navigateToSection('Products');
+                    // Wait for section to show, then select
+                    setTimeout(() => {
+                        window.quickSelectProduct(p.id, p.item_name);
+                    }, 100);
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        function renderUserShop(products, filter = 'all') {
+            const grid = document.getElementById('user-product-grid');
+            const totalOrganicEl = document.getElementById('total-organic');
+            const totalDairyEl = document.getElementById('total-dairy');
+            if (!grid) return;
+
+            if (!Array.isArray(products)) {
+                console.error("Products is not an array:", products);
+                grid.innerHTML = '<div class="no-data-msg">Unable to load products.</div>';
+                return;
+            }
+
+            // Safer filtering using string conversion
+            const getCat = (p) => String(p.category || "").toLowerCase();
+
+            const organic = products.filter(p => {
+                const c = getCat(p);
+                return c.includes('organic') || c.includes('vegetable') || c.includes('fruit') || c.includes('leafy');
+            });
+
+            const dairy = products.filter(p => getCat(p).includes('dairy'));
+
+            // Catch-all for anything else
+            const others = products.filter(p => !organic.includes(p) && !dairy.includes(p));
+
+            if (totalOrganicEl) totalOrganicEl.innerText = organic.length;
+            if (totalDairyEl) totalDairyEl.innerText = dairy.length;
+
+            grid.innerHTML = '';
+            grid.style.display = 'block';
+
+            if (products.length === 0) {
+                grid.innerHTML = '<div class="no-data-msg">No products currently available from our farms.</div>';
+                return;
+            }
+
+            const renderSection = (items, title, color, img) => {
+                if (items.length === 0) return;
+
+                const sectionHeader = document.createElement('div');
+                sectionHeader.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; margin: 30px 0 15px; border-bottom: 2px solid ${color}; padding-bottom: 8px;">
+                        <h3 style="margin: 0; color: ${color};">${title}</h3>
+                        <span style="background: ${color}; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.8rem;">${items.length} Items</span>
+                    </div>
+                `;
+
+                const subGrid = document.createElement('div');
+                subGrid.style.display = 'grid';
+                subGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+                subGrid.style.gap = '25px';
+                subGrid.style.marginBottom = '40px';
+
+                items.forEach(p => {
+                    subGrid.appendChild(createProductCard(p, img));
+                });
+
+                grid.appendChild(sectionHeader);
+                grid.appendChild(subGrid);
+            };
+
+            // Apply filter logic
+            if (filter === 'all' || filter === 'organic') {
+                renderSection(organic, 'Organic Vegetables & Fruits', '#27ae60', 'images/organic.png');
+            }
+            if (filter === 'all' || filter === 'dairy') {
+                renderSection(dairy, 'Fresh Dairy Products', '#f39c12', 'images/dairy.png');
+            }
+            if (filter === 'all' && others.length > 0) {
+                renderSection(others, 'Other Farm Produce', '#7f8c8d', 'images/organic.png');
+            }
+
+            console.log(`DEBUG: Rendered ${organic.length} organic, ${dairy.length} dairy, ${others.length} others.`);
+        }
+
+        function createProductCard(p, categoryImg) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            const isLowStock = p.quantity <= p.threshold;
+
+            // Use local professional images if available, fallback to LoremFlickr
+            // Improved keyword extraction to find the CORE product name (e.g. "Milk" instead of "Whole")
+            const baseTypes = ['Milk', 'Cheese', 'Butter', 'Yogurt', 'Beef', 'Chicken', 'Pork', 'Lamb', 'Apples', 'Bananas', 'Oranges', 'Grapes', 'Strawberries', 'Blueberries', 'Peaches', 'Tomatoes', 'Potatoes', 'Onions', 'Lettuce', 'Peppers', 'Carrots', 'Cabbage', 'Corn', 'Rice', 'Wheat', 'Oats', 'Barley', 'Rye'];
+            const coreTag = baseTypes.find(t => p.item_name.includes(t)) || 'food';
+
+            const localImg = `images/products/${coreTag.toLowerCase()}.png`;
+            const flickrImg = `https://loremflickr.com/320/240/${coreTag},food,fresh?lock=${p.id}`;
+
+            card.innerHTML = `
+                <div class="product-image-container" style="height: 180px; overflow: hidden;">
+                    <img src="${localImg}" alt="${p.item_name}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s;"
+                         onerror="if(this.src.includes('${localImg}')){ this.src='${flickrImg}'; } else if(this.src.includes('${flickrImg}')){ this.src='${categoryImg}'; this.onerror=null; }">
+                </div>
+                <div class="product-info">
+                    <h4>${p.item_name}</h4>
+                    <p class="category">${p.category}</p>
+                    <div class="product-meta">
+                        <span class="price">$${p.unit_price.toFixed(2)}/${p.unit || 'kg'}</span>
+                        <span class="stock ${isLowStock ? 'low' : ''}">${isLowStock ? 'Low Stock' : 'In Stock'}</span>
+                    </div>
+                    <button onclick='addToCart(${JSON.stringify(p)})' class="btn-buy" style="margin-top: 10px;" ${isLowStock ? 'disabled' : ''}>
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
+            `;
+            return card;
+        }
+
+        // REMOVED: quickSelectProduct and single-order form logic as it's replaced by Cart
+
+
+        window.quickSelectProduct = (id, name) => {
+            const hiddenInput = document.getElementById('orderProductSelect');
+            const displayDiv = document.getElementById('selected-product-display');
+            const formContainer = document.getElementById('order-form-container');
+
+            if (formContainer) {
+                formContainer.style.display = 'block';
+            }
+
+            if (hiddenInput && displayDiv) {
+                hiddenInput.value = id;
+                displayDiv.innerText = name;
+            }
+
+            formContainer.scrollIntoView({ behavior: 'smooth' });
+            // Highlight form
+            formContainer.style.boxShadow = '0 0 20px rgba(39, 174, 96, 0.2)';
+            setTimeout(() => formContainer.style.boxShadow = '', 2000);
+        };
+
+        updateStats();
+
+        // User Order Submission
+        const createOrderFormUser = document.getElementById('create-order-form');
+        if (createOrderFormUser) {
+            createOrderFormUser.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const inventoryId = document.getElementById('orderProductSelect').value;
+                const quantity = parseInt(document.getElementById('orderQuantity').value);
+                const paymentMethod = document.getElementById('orderPaymentMethod').value;
+
+                if (!inventoryId || !quantity || quantity <= 0) {
+                    alert('Please select a valid quantity.');
+                    return;
+                }
+
+                const orderData = {
+                    customer_name: document.getElementById('userName').innerText,
+                    order_type: 'Online',
+                    payment_method: paymentMethod,
+                    items: [{ inventoryId: parseInt(inventoryId), quantity: quantity }]
+                };
+
+                try {
+                    const res = await fetch('/api/orders', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token
+                        },
+                        body: JSON.stringify(orderData)
+                    });
+
+                    if (res.ok) {
+                        alert('Order placed successfully! You can track it in Order History.');
+                        createOrderFormUser.reset();
+                        document.getElementById('order-form-container').style.display = 'none';
+                        updateStats(); // Refresh badge counts
+                    } else {
+                        const err = await res.json();
+                        alert(`Error: ${err.message}`);
+                    }
+                } catch (err) {
+                    console.error('Order Error:', err);
+                    alert('Failed to place order.');
+                }
+            });
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/';
+        });
+
+        // Small customization for the customer view of the table
+        // We want to hide some management columns if they exist
+    </script>
+    <style>
+        /* New User Dashboard Styles */
+        .welcome-banner {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.2);
+        }
+
+        .banner-text h2 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .banner-text p {
+            margin: 5px 0 0;
+            opacity: 0.9;
+        }
+
+        .banner-icon {
+            font-size: 3rem;
+            opacity: 0.3;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f9f9f9;
+        }
+
+        .card-header h3 {
+            font-size: 1rem;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .no-data-msg {
+            color: #bdc3c7;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-info p {
+            margin: 5px 0 0;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        .summary-meta {
+            text-align: right;
+        }
+
+        .summary-meta .price {
+            display: block;
+            font-weight: 600;
+            color: #27ae60;
+        }
+
+        .summary-meta .date {
+            font-size: 0.75rem;
+            color: #bdc3c7;
+        }
+
+        .status-widget {
+            text-align: center;
+        }
+
+        .status-badge-inline {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status-badge-inline.pending {
+            background: #fff4e5;
+            color: #ff9800;
+        }
+
+        .status-badge-inline.shipped {
+            background: #e3f2fd;
+            color: #2196f3;
+        }
+
+        .status-badge-inline.packed {
+            background: #f3e5f5;
+            color: #9c27b0;
+        }
+
+        .btn-track-slim {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        .discovery-section {
+            margin-bottom: 30px;
+        }
+
+        .rec-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .rec-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .rec-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .rec-card i {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .offers-banner {
+            background: #fff8e1;
+            border: 2px dashed #ffc107;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .offer-tag {
+            background: #ffc107;
+            color: #000;
+            font-weight: 800;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.7rem;
+        }
+
+        .offer-content {
+            flex: 1;
+        }
+
+        .offer-content h4 {
+            margin: 0;
+            color: #5d4037;
+        }
+
+        .offer-content p {
+            margin: 5px 0 0;
+            font-size: 0.85rem;
+        }
+
+        /* Filter Buttons Style */
+        .filter-btn {
+            background: none;
+            border: none;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #7f8c8d;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-btn i {
+            font-size: 1rem;
+        }
+
+        .filter-btn.active {
+            background: #27ae60;
+            color: white;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2);
+        }
+
+        .filter-btn:not(.active):hover {
+            background: #f8f9fa;
+            color: #27ae60;
+        }
+
+        #filter-organic.active {
+            background: #27ae60;
+        }
+
+        #filter-dairy.active {
+            background: #f39c12;
+        }
+
+        #filter-all.active {
+            background: #34495e;
+        }
+
+        .stat-badge {
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-badge.organic {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .stat-badge.dairy {
+            background: #fffde7;
+            color: #f9a825;
+            border: 1px solid #fff9c4;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+            border: 1px solid #eee;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-icon {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .product-icon.organic {
+            background: #f1f8e9;
+            color: #689f38;
+        }
+
+        .product-icon.dairy {
+            background: #fffcf0;
+            color: #fbc02d;
+        }
+
+        .product-info {
+            padding: 15px;
+        }
+
+        .product-info h4 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        .product-info .category {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .product-meta .price {
+            font-weight: 600;
+            color: #27ae60;
+            font-size: 1.05rem;
+        }
+
+        .product-meta .stock {
+            font-size: 0.75rem;
+            color: #27ae60;
+            background: #e8f5e9;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .product-meta .stock.low {
+            color: #e74c3c;
+            background: #feebeb;
+        }
+
+        .btn-buy {
+            width: 100%;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-buy:hover {
+            background: #2980b9;
+        }
+
+        #create-order-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        #create-order-form input,
+        #create-order-form select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        #create-order-form button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #create-order-form button:hover {
+            background: #219150;
+        }
+    </style>
+</body>
+
+</html>

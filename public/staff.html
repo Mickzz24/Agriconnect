@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriConnect - Staff Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="menu-item active"><i class="fas fa-home"></i> Dashboard</div>
+        <div class="menu-item"><i class="fas fa-tasks"></i> Manage Orders</div>
+        <div class="menu-item"><i class="fas fa-file-invoice"></i> Payments & Invoices</div>
+        <div class="menu-item"><i class="fas fa-boxes"></i> Inventory</div>
+        <div class="menu-item"><i class="fas fa-bell"></i> Notifications</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 id="page-title">Staff Dashboard</h1>
+            <div style="display: flex; align-items: center;">
+                <div id="userDisplay" class="user-badge">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName">Loading...</span>
+                    <span id="userRole" class="role-label"></span>
+                </div>
+                <button class="btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Home Section -->
+        <div id="global-alert-container" style="margin-bottom: 20px;"></div>
+        <div id="dashboard-section">
+            <div class="card-container">
+                <div class="card">
+                    <h3>New Orders (Pending)</h3>
+                    <div class="value" id="stat-pending" style="color: #f39c12;">0</div>
+                </div>
+                <div class="card">
+                    <h3>Orders to Pack</h3>
+                    <div class="value" id="stat-packing" style="color: #3498db;">0</div>
+                </div>
+                <div class="card">
+                    <h3>Orders Ready</h3>
+                    <div class="value" id="stat-delivery" style="color: #9b59b6;">0</div>
+                </div>
+                <div class="card">
+                    <h3>Today's Sales</h3>
+                    <div class="value" id="stat-sales-today" style="color: #27ae60;">$0.00</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Manage Orders Section -->
+        <div id="manage-orders-section" style="display: none;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button id="toggle-order-form" class="btn-action"
+                    style="background-color: #2ecc71; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 600;">
+                    <i class="fas fa-plus"></i> Register Farm Sale
+                </button>
+                <button id="toggle-pending-requests" class="btn-action"
+                    style="background-color: #f39c12; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 600; margin-left:10px;">
+                    <i class="fas fa-clock"></i> Pending Requests
+                </button>
+            </div>
+
+            <div id="order-form-card" class="section-container" style="display: none; margin-bottom: 30px;">
+                <h3>New Farm Sale</h3>
+                <form id="create-order-form"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                    <div style="grid-column: span 2;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Customer Name</label>
+                        <input type="text" id="orderCustomerName" placeholder="Enter Customer Name (e.g. Guest)"
+                            required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Product Type</label>
+                        <select id="orderMainCategory" required
+                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <option value="">Select Type...</option>
+                            <option value="Organic Vegetable">Organic Vegetable</option>
+                            <option value="Dairy Product">Dairy Product</option>
+                            <option value="Livestock">Livestock</option>
+                            <option value="Fruits">Fruits</option>
+                            <option value="Grains & Crops">Grains & Crops</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Category</label>
+                        <select id="orderSubCategory" required disabled
+                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <option value="">Select Category...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Product Name</label>
+                        <select id="orderItemNameSelect" required disabled
+                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <option value="">Select Item...</option>
+                        </select>
+                        <input type="hidden" id="orderInventoryId">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Demanded Stock
+                            (Qty)</label>
+                        <input type="number" id="orderQuantity" placeholder="Qty" min="1" required
+                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Price</label>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="font-weight: 600;">$</span>
+                            <input type="number" step="0.01" id="orderPrice" placeholder="0.00" required
+                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <div id="stockPreview" style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">
+                            Available Stock: --
+                        </div>
+                    </div>
+                    <button type="submit"
+                        style="grid-column: span 2; background: #27ae60; color: white; padding: 12px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer;">Register
+                        Sale</button>
+                </form>
+            </div>
+
+            <div id="pending-requests-card" class="section-container"
+                style="margin-bottom: 30px; display: none; border-top: 4px solid #f39c12;">
+                <h3>Pending Sales Requests</h3>
+                <p style="color: #7f8c8d; margin-bottom: 20px;">Review and approve customer requests based on current
+                    stock availability.</p>
+                <div style="overflow-x: auto;">
+                    <table id="pending-orders-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pending-orders-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h3>Order Fulfillment</h3>
+                        <p style="color: #7f8c8d;">Track and update status for approved farm sales and online orders.
+                        </p>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table id="fulfillment-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fulfillment-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments & Invoices Section -->
+        <div id="payments-invoices-section" style="display: none;">
+            <div class="section-container">
+                <h3>Track Payment Status</h3>
+                <table id="payments-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Invoices</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payments-body">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Update Inventory Section -->
+        <div id="inventory-section" style="display: none;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button id="toggle-product-form" class="btn-action"
+                    style="background-color: #27ae60; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 600;">
+                    <i class="fas fa-plus"></i> Add Current Stock
+                </button>
+            </div>
+
+            <div id="product-form-card" class="section-container" style="display: none; margin-bottom: 30px;">
+                <h3>Manual Stock Adjustment</h3>
+                <form id="add-inventory-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <select id="mainCategory" required>
+                        <option value="">Select Category...</option>
+                        <option value="Organic Vegetable">Organic Vegetable</option>
+                        <option value="Dairy Product">Dairy Product</option>
+                        <option value="Livestock">Livestock</option>
+                        <option value="Fruits">Fruits</option>
+                        <option value="Grains & Crops">Grains & Crops</option>
+                    </select>
+                    <select id="subCategory" required disabled>
+                        <option value="">Select Sub-Category...</option>
+                    </select>
+                    <div style="grid-column: span 1; display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Status: Item Selection</label>
+                        <select id="itemNameSelect" required disabled>
+                            <option value="">Select Item Name...</option>
+                        </select>
+                        <input type="text" id="itemName" placeholder="Or type custom name..." style="display: none;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Price per unit</label>
+                        <input type="number" step="0.01" id="itemPrice" placeholder="Price" required
+                            style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Unit</label>
+                        <select id="itemUnit" required style="width: 100%;">
+                            <option value="kg">kg</option>
+                            <option value="liter">liter</option>
+                            <option value="piece">piece</option>
+                            <option value="packet">packet</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Stock Quantity</label>
+                        <input type="number" id="itemQuantity" placeholder="Quantity" required style="width: 100%;">
+                    </div>
+                    <div id="expiryField" style="display: none;">
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Expiry Date (Dairy only)</label>
+                        <input type="date" id="itemExpiry" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #7f8c8d;">Min Stock</label>
+                        <input type="number" id="itemThreshold" placeholder="Alert Level" value="10" required
+                            style="width: 100%;">
+                    </div>
+                    <button type="submit" style="grid-column: span 2;">Update Stock</button>
+                </form>
+            </div>
+
+            <div class="section-container">
+                <h3>Live Farm Inventory</h3>
+                <table id="inventory-table-mgt">
+                    <thead>
+                        <tr>
+                            <th>Product Type</th>
+                            <th>Category</th>
+                            <th>Product Name</th>
+                            <th>Price per unit</th>
+                            <th>Total Price</th>
+                            <th>Stock Quantity</th>
+                            <th>Minimum Stock</th>
+                            <th>Expiry</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div id="notifications-section" style="display: none;">
+            <div class="section-container">
+                <h3>Operational Alerts</h3>
+                <div id="low-stock-notifications">
+                    <!-- Notifications for farmer -->
+                </div>
+                <div
+                    style="text-align: center; padding: 30px; border: 2px dashed #eee; border-radius: 10px; margin-top: 20px;">
+                    <i class="fas fa-paper-plane" style="font-size: 2rem; color: #27ae60; margin-bottom: 10px;"></i>
+                    <p>Farmers will be automatically notified via SMS/Email if stock drops below threshold.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/inventory.js?v=1.1"></script>
+    <script src="js/orders.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+        if (!token || role !== 'staff') {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Navigation Logic
+        const menuItems = document.querySelectorAll('.menu-item');
+        const sections = {
+            'Dashboard': document.getElementById('dashboard-section'),
+            'Manage Orders': document.getElementById('manage-orders-section'),
+            'Payments & Invoices': document.getElementById('payments-invoices-section'),
+            'Inventory': document.getElementById('inventory-section'),
+            'Notifications': document.getElementById('notifications-section')
+        };
+        const pageTitle = document.getElementById('page-title');
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const text = item.innerText.trim();
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                if (sections[text]) {
+                    Object.values(sections).forEach(sec => sec.style.display = 'none');
+                    sections[text].style.display = 'block';
+                    pageTitle.innerText = text;
+
+                    if (text === 'Manage Orders') {
+                        fetchOrders();
+                        if (typeof populateProductSelect === 'function') populateProductSelect();
+                    }
+                    if (text === 'Payments & Invoices') {
+                        fetchOrders();
+                        renderPaymentTable();
+                    }
+                    if (text === 'Inventory') {
+                        fetchInventory();
+                    }
+                    if (text === 'Notifications') {
+                        checkStockNotifications();
+                    }
+                }
+            });
+        });
+
+        async function fetchStats() {
+            try {
+                // Fetch profile first for header
+                const profileRes = await fetch('/api/user/profile', { headers: { 'Authorization': token } });
+                const profileData = await profileRes.json();
+                document.getElementById('userName').innerText = profileData.username;
+                document.getElementById('userRole').innerText = profileData.role;
+
+                const response = await fetch('/api/reports/stats', { headers: { 'Authorization': token } });
+                const data = await response.json();
+
+                document.getElementById('stat-pending').innerText = data.orders.pending !== undefined ? data.orders.pending : 0;
+                document.getElementById('stat-packing').innerText = data.orders.toPack !== undefined ? data.orders.toPack : 0;
+                document.getElementById('stat-delivery').innerText = data.orders.readyForDelivery !== undefined ? data.orders.readyForDelivery : 0;
+                document.getElementById('stat-sales-today').innerText = `$${(data.revenue.today || 0).toFixed(2)}`;
+
+                // Low stock alert check only (no card needed if not requested, or re-add logic if user wants it)
+                // The global alert container handles the visual warning.
+
+                // Check for alerts immediately
+                if (typeof checkLowStock === 'function') {
+                    // We need actual inventory data for checkLowStock
+                    const invRes = await fetch('/api/inventory');
+                    const items = await invRes.json();
+                    checkLowStock(items);
+                }
+            } catch (err) { console.error(err); }
+        }
+        fetchStats();
+
+        async function renderPaymentTable() {
+            try {
+                const response = await fetch('/api/orders', { headers: { 'Authorization': token } });
+                const data = await response.json();
+                const orders = (Array.isArray(data) ? data : []).sort((a, b) => b.id - a.id);
+                const tbody = document.getElementById('payments-body');
+                tbody.innerHTML = '';
+
+                orders.forEach(o => {
+                    const tr = document.createElement('tr');
+                    const isDelivered = o.status === 'Delivered';
+                    tr.innerHTML = `
+                        <td>#${o.id}</td>
+                        <td>${o.customer_name}</td>
+                        <td>$${o.total_amount.toFixed(2)}</td>
+                        <td>
+                            <span style="background: ${isDelivered ? '#e8f5e9' : '#fef9e7'}; color: ${isDelivered ? '#2e7d32' : '#9a7d0a'}; padding: 4px 8px; border-radius: 4px; font-weight: 600;">
+                                ${o.status}
+                            </span>
+                        </td>
+                        <td>
+                            <button onclick="window.downloadInvoice(${o.id})" 
+                                class="btn-action" 
+                                style="background: ${isDelivered ? '#3498db' : '#bdc3c7'}; color: white; cursor: ${isDelivered ? 'pointer' : 'not-allowed'};"
+                                ${!isDelivered ? 'disabled' : ''}>
+                                ${isDelivered ? 'Download Invoice' : 'Locked'}
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        function checkStockNotifications() {
+            const container = document.getElementById('low-stock-notifications');
+            container.innerHTML = '<div style="background: #fff5f5; border-left: 5px solid #e74c3c; padding: 15px; margin-bottom: 15px;"><strong>Stock Warning:</strong> Organic Milk is below threshold (5 left)</div>';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/';
+        });
+
+        // Form toggle logic
+        const setupToggle = (btnId, cardId, defaultText, activeText) => {
+            const btn = document.getElementById(btnId);
+            const card = document.getElementById(cardId);
+            if (btn && card) {
+                btn.onclick = () => {
+                    const isHidden = card.style.display === 'none';
+                    card.style.display = isHidden ? 'block' : 'none';
+                    btn.innerHTML = isHidden ? `Close Form` : `<i class="fas fa-plus"></i> ${defaultText}`;
+                    btn.style.background = isHidden ? '#e74c3c' : '#27ae60';
+
+                    // Refresh inventory data if opening the order form
+                    if (isHidden && btnId === 'toggle-order-form' && typeof window.populateProductSelect === 'function') {
+                        window.populateProductSelect();
+                    }
+                };
+            }
+        };
+
+        setupToggle('toggle-product-form', 'product-form-card', 'Add Current Stock');
+        setupToggle('toggle-order-form', 'order-form-card', 'Register Farm Sale');
+        setupToggle('toggle-pending-requests', 'pending-requests-card', 'Pending Requests');
+
+        // Create order listener (handled by orders.js if form ID matches)
+        // We can keep a specific alert if we want, but orders.js will now handle the fetch.
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriConnect: Accountant Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        /* Specific tweaks to ensure chart cards follow owner's layout */
+        .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            flex: 1;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .table-controls input,
+        .table-controls select {
+            width: auto;
+            min-width: 200px;
+        }
+
+        .btn-prime {
+            background: linear-gradient(to right, #1e8449, #2ecc71);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.2);
+        }
+
+        .btn-prime:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
+        }
+
+        /* Modal styling to match standard UI */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 8% auto;
+            padding: 40px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 25px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .close {
+            position: absolute;
+            right: 30px;
+            top: 25px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #95a5a6;
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .report-item {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .report-item:hover {
+            border-color: #2ecc71;
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="menu-item active" onclick="switchSection('Dashboard')"><i class="fas fa-home"></i> Dashboard</div>
+
+        <div class="menu-item" onclick="switchSection('Expenses')"><i class="fas fa-file-invoice-dollar"></i> Expenses
+        </div>
+        <div class="menu-item" onclick="switchSection('Payments')"><i class="fas fa-credit-card"></i> Payments</div>
+        <div class="menu-item" onclick="switchSection('Reports')"><i class="fas fa-file-pdf"></i> Reports</div>
+        <div class="menu-item" onclick="switchSection('Profit Summary')"><i class="fas fa-calculator"></i> Profit
+            Summary</div>
+        <div class="menu-item" onclick="switchSection('Analytics')"><i class="fas fa-chart-line"></i> Analytics</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 id="page-title">Financial Dashboard</h1>
+            <div style="display: flex; align-items: center;">
+                <div id="userDisplay" class="user-badge">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName">Loading...</span>
+                    <span id="userRole" class="role-label">Accountant</span>
+                </div>
+                <button class="btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section">
+            <div class="card-container">
+                <div class="card">
+                    <h3>Today's Revenue</h3>
+                    <div class="value" id="card-today-revenue">$0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Today's Expenses</h3>
+                    <div class="value" id="card-today-expenses" style="color: #e74c3c;">$0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Monthly Profit</h3>
+                    <div class="value" id="card-monthly-profit">$0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Pending Payments</h3>
+                    <div class="value" id="card-pending-payments" style="color: #f39c12;">0</div>
+                </div>
+            </div>
+
+            <!-- Owners style Charts Grid -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <canvas id="todaySalesChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <canvas id="expenseDistChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <canvas id="financialOverviewChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <canvas id="weeklySalesChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <canvas id="monthlySalesChart"></canvas>
+                </div>
+                <div class="chart-card" style="grid-column: 1 / -1; height: 350px; min-height: 350px;">
+                    <canvas id="yearlySalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Expenses Section -->
+        <div id="expenses-section" style="display: none;">
+            <div class="section-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Expense Management</h3>
+                    <button class="btn-prime" onclick="openExpenseModal()"><i class="fas fa-plus"></i> Add
+                        Expense</button>
+                </div>
+                <table id="expenses-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Added By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenses-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Payments Section -->
+        <div id="payments-section" style="display: none;">
+            <div class="section-container">
+                <h3>Transaction Verification</h3>
+                <div class="table-controls">
+                    <button class="btn-prime" style="background:#34495e" onclick="loadPayments('All')">All
+                        Transactions</button>
+                    <button class="btn-prime" style="background:#2ecc71" onclick="loadPayments('Paid')">Paid
+                        Orders</button>
+                    <button class="btn-prime" style="background:#3498db" onclick="loadPayments('COD')">COD
+                        Payments</button>
+                    <button class="btn-prime" style="background:#f39c12" onclick="loadPayments('Pending')">Pending
+                        Payments</button>
+                    <button class="btn-prime" style="background:#e74c3c"
+                        onclick="loadPayments('Cancelled')">Failed</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Mode</th>
+                            <th>Status</th>
+                            <th>Verification</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payments-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports-section" style="display: none;">
+            <div class="section-container">
+                <h3>Financial Reports Center</h3>
+                <div class="table-controls" style="justify-content: flex-start;">
+                    <label style="font-weight: 600; color: #34495e;">Select Date: <input type="date" id="reportDate"
+                            style="margin-left: 10px;"></label>
+                </div>
+                <div class="report-grid">
+                    <div class="report-item">
+                        <h4>Sales Reports</h4>
+                        <p>Generate sales breakdown for different periods.</p>
+                        <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 500; font-size: 0.9rem;">Daily:</span>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="downloadReport('Daily', 'pdf')" class="btn-prime"
+                                        style="padding: 5px 12px; font-size: 0.8rem;">PDF</button>
+                                    <button onclick="downloadReport('Daily', 'csv')" class="btn-prime"
+                                        style="background: #34495e; padding: 5px 12px; font-size: 0.8rem;">CSV</button>
+                                    <button onclick="emailReport('Daily', 'csv')" class="btn-prime"
+                                        style="background: #e67e22; padding: 5px 12px; font-size: 0.8rem;"
+                                        title="Email to Owner"><i class="fas fa-envelope"></i></button>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 500; font-size: 0.9rem;">Weekly:</span>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="downloadReport('Weekly', 'pdf')" class="btn-prime"
+                                        style="padding: 5px 12px; font-size: 0.8rem;">PDF</button>
+                                    <button onclick="downloadReport('Weekly', 'csv')" class="btn-prime"
+                                        style="background: #34495e; padding: 5px 12px; font-size: 0.8rem;">CSV</button>
+                                    <button onclick="emailReport('Weekly', 'csv')" class="btn-prime"
+                                        style="background: #e67e22; padding: 5px 12px; font-size: 0.8rem;"
+                                        title="Email to Owner"><i class="fas fa-envelope"></i></button>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 500; font-size: 0.9rem;">Monthly:</span>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="downloadReport('Monthly', 'pdf')" class="btn-prime"
+                                        style="padding: 5px 12px; font-size: 0.8rem;">PDF</button>
+                                    <button onclick="downloadReport('Monthly', 'csv')" class="btn-prime"
+                                        style="background: #34495e; padding: 5px 12px; font-size: 0.8rem;">CSV</button>
+                                    <button onclick="emailReport('Monthly', 'csv')" class="btn-prime"
+                                        style="background: #e67e22; padding: 5px 12px; font-size: 0.8rem;"
+                                        title="Email to Owner"><i class="fas fa-envelope"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-item">
+                        <h4>Profit & Loss Report</h4>
+                        <p>Summary of net earnings after expenses for the selected date's month.</p>
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button onclick="downloadReport('PL', 'pdf')" class="btn-prime">PDF</button>
+                            <button onclick="downloadReport('PL', 'csv')" class="btn-prime"
+                                style="background: #34495e;">CSV</button>
+                        </div>
+                    </div>
+                    <div class="report-item">
+                        <h4>Expense Breakdown</h4>
+                        <p>Categorized operational spending for the selected date's month.</p>
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button onclick="downloadReport('Expense', 'pdf')" class="btn-prime">PDF</button>
+                            <button onclick="downloadReport('Expense', 'csv')" class="btn-prime"
+                                style="background: #34495e;">CSV</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profit Summary Section -->
+        <div id="profit-summary-section" style="display: none;">
+            <div class="section-container">
+                <h3>Net Profit Summary</h3>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 40px; margin-top: 30px;">
+                    <div style="background: #f8f9fa; padding: 40px; border-radius: 20px;">
+                        <div style="margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px;">
+                            <h4 style="color: #7f8c8d; font-size: 0.9rem;">TOTAL REVENUE</h4>
+                            <div id="span-total-revenue" style="font-size: 1.8rem; font-weight: 700; color: #2ecc71;">
+                                $0.00</div>
+                        </div>
+                        <div style="margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px;">
+                            <h4 style="color: #7f8c8d; font-size: 0.9rem;">TOTAL EXPENSES</h4>
+                            <div id="span-total-expenses" style="font-size: 1.8rem; font-weight: 700; color: #e74c3c;">
+                                $0.00</div>
+                        </div>
+                        <div>
+                            <h4 style="color: #7f8c8d; font-size: 0.9rem;">NET PROFIT</h4>
+                            <div id="span-net-profit" style="font-size: 2.2rem; font-weight: 800; color: #27ae60;">$0.00
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <canvas id="profitGrowthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="analytics-section" style="display: none;">
+            <div class="section-container" style="background: transparent; box-shadow: none; padding: 0;">
+                <div id="ai-insights-container">
+                    <div class="insight-card sales">
+                        <h4>Next Month Predicted Sales</h4>
+                        <div class="value">Loading...</div>
+                    </div>
+                    <div class="insight-card profit">
+                        <h4>Next Month Predicted Profit</h4>
+                        <div class="value">Loading...</div>
+                    </div>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="analytics-chart-card">
+                        <canvas id="analyticsTrendChart"></canvas>
+                    </div>
+                    <div class="analytics-chart-card">
+                        <canvas id="analyticsForecastChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div id="expenseModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeExpenseModal()">&times;</span>
+            <h2 id="expenseModalTitle" style="margin-bottom: 25px; color: #27ae60;">Add New Expense</h2>
+            <form id="expenseForm">
+                <input type="hidden" id="expenseId">
+                <div>
+                    <label>Description</label>
+                    <input type="text" id="expDescription" placeholder="e.g., Monthly Power Bill" required>
+                </div>
+                <div>
+                    <label>Category</label>
+                    <select id="expCategory" required>
+                        <option value="Transport">Transport</option>
+                        <option value="Packaging">Packaging</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Rent">Rent</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Amount ($)</label>
+                    <input type="number" step="0.01" id="expAmount" placeholder="0.00" required>
+                </div>
+                <div style="margin-bottom: 25px;">
+                    <label>Date</label>
+                    <input type="date" id="expDate" required>
+                </div>
+                <button type="submit" class="btn-prime" style="width: 100%; justify-content: center;">Save
+                    Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/dashboard_charts.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/accountant.js"></script>
+</body>
+
+</html>
