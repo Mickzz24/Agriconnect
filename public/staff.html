@@ -6,20 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriConnect - Staff Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body>
+<body class="role-staff">
     <div class="sidebar">
-        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="logo"><i class="fas fa-seedling"></i> AgriConnect: Organic & Dairy Sales Analyzer</div>
         <div class="menu-item active"><i class="fas fa-home"></i> Dashboard</div>
-        <div class="menu-item"><i class="fas fa-tasks"></i> Manage Orders</div>
+        <div class="menu-item"><i class="fas fa-list-check"></i> Manage Orders</div>
         <div class="menu-item"><i class="fas fa-file-invoice"></i> Payments & Invoices</div>
-        <div class="menu-item"><i class="fas fa-boxes"></i> Inventory</div>
+        <div class="menu-item"><i class="fas fa-boxes-stacked"></i> Inventory</div>
         <div class="menu-item"><i class="fas fa-bell"></i> Notifications</div>
     </div>
 
@@ -32,7 +33,7 @@
                     <span id="userName">Loading...</span>
                     <span id="userRole" class="role-label"></span>
                 </div>
-                <button class="btn-logout" id="logoutBtn">Logout</button>
+                <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
 
@@ -56,6 +57,23 @@
                     <h3>Today's Sales</h3>
                     <div class="value" id="stat-sales-today" style="color: #27ae60;">$0.00</div>
                 </div>
+                <div class="card">
+                    <h3>Units Shipped (Volume)</h3>
+                    <div class="value" id="stat-volume-staff" style="color: #3498db;">0</div>
+                </div>
+            </div>
+
+            <!-- Integrated Charts Section -->
+            <div class="charts-grid" style="margin-top: 30px;">
+                <div class="chart-card">
+                    <canvas id="todaySalesChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <canvas id="expenseDistChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <canvas id="weeklySalesChart"></canvas>
+                </div>
             </div>
 
         </div>
@@ -75,18 +93,15 @@
 
             <div id="order-form-card" class="section-container" style="display: none; margin-bottom: 30px;">
                 <h3>New Farm Sale</h3>
-                <form id="create-order-form"
-                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
-                    <div style="grid-column: span 2;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Customer Name</label>
-                        <input type="text" id="orderCustomerName" placeholder="Enter Customer Name (e.g. Guest)"
-                            required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                <form id="create-order-form" class="form-grid">
+                    <div class="form-group full-width">
+                        <label class="form-label">Customer Name</label>
+                        <input type="text" id="customerName" placeholder="Walk-in Customer / Registered Name" required>
                     </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Product Type</label>
-                        <select id="orderMainCategory" required
-                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                            <option value="">Select Type...</option>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select id="orderCategory" required>
+                            <option value="">Select Category...</option>
                             <option value="Organic Vegetable">Organic Vegetable</option>
                             <option value="Dairy Product">Dairy Product</option>
                             <option value="Livestock">Livestock</option>
@@ -94,50 +109,38 @@
                             <option value="Grains & Crops">Grains & Crops</option>
                         </select>
                     </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Category</label>
-                        <select id="orderSubCategory" required disabled
-                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                            <option value="">Select Category...</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Product Name</label>
-                        <select id="orderItemNameSelect" required disabled
-                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <div class="form-group">
+                        <label class="form-label">Product Name</label>
+                        <select id="orderItemNameSelect" required disabled>
                             <option value="">Select Item...</option>
                         </select>
                         <input type="hidden" id="orderInventoryId">
                     </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Demanded Stock
-                            (Qty)</label>
-                        <input type="number" id="orderQuantity" placeholder="Qty" min="1" required
-                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <div class="form-group">
+                        <label class="form-label">Demanded Stock (Qty)</label>
+                        <input type="number" id="orderQuantity" placeholder="Qty" min="1" required>
                     </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Price</label>
+                    <div class="form-group">
+                        <label class="form-label">Price</label>
                         <div style="display: flex; align-items: center; gap: 5px;">
                             <span style="font-weight: 600;">$</span>
-                            <input type="number" step="0.01" id="orderPrice" placeholder="0.00" required
-                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <input type="number" step="0.01" id="orderPrice" placeholder="0.00" required>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: flex-end;">
+                    <div class="form-group full-width">
                         <div id="stockPreview" style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">
                             Available Stock: --
                         </div>
+                        <button type="submit" class="btn-primary">Register Sale</button>
                     </div>
-                    <button type="submit"
-                        style="grid-column: span 2; background: #27ae60; color: white; padding: 12px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer;">Register
-                        Sale</button>
                 </form>
             </div>
 
             <div id="pending-requests-card" class="section-container"
                 style="margin-bottom: 30px; display: none; border-top: 4px solid #f39c12;">
                 <h3>Pending Sales Requests</h3>
-                <p style="color: #7f8c8d; margin-bottom: 20px;">Review and approve customer requests based on current
+                <p style="color: #7f8c8d; margin-bottom: 20px;">Review and approve customer requests based on
+                    current
                     stock availability.</p>
                 <div style="overflow-x: auto;">
                     <table id="pending-orders-table">
@@ -162,7 +165,8 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div>
                         <h3>Order Fulfillment</h3>
-                        <p style="color: #7f8c8d;">Track and update status for approved farm sales and online orders.
+                        <p style="color: #7f8c8d;">Track and update status for approved farm sales and online
+                            orders.
                         </p>
                     </div>
                 </div>
@@ -219,53 +223,60 @@
 
             <div id="product-form-card" class="section-container" style="display: none; margin-bottom: 30px;">
                 <h3>Manual Stock Adjustment</h3>
-                <form id="add-inventory-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <select id="mainCategory" required>
-                        <option value="">Select Category...</option>
-                        <option value="Organic Vegetable">Organic Vegetable</option>
-                        <option value="Dairy Product">Dairy Product</option>
-                        <option value="Livestock">Livestock</option>
-                        <option value="Fruits">Fruits</option>
-                        <option value="Grains & Crops">Grains & Crops</option>
-                    </select>
-                    <select id="subCategory" required disabled>
-                        <option value="">Select Sub-Category...</option>
-                    </select>
-                    <div style="grid-column: span 1; display: flex; flex-direction: column; gap: 5px;">
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Status: Item Selection</label>
+                <form id="add-inventory-form" class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select id="mainCategory" required>
+                            <option value="">Select Category...</option>
+                            <option value="Organic Vegetable">Organic Vegetable</option>
+                            <option value="Dairy Product">Dairy Product</option>
+                            <option value="Livestock">Livestock</option>
+                            <option value="Fruits">Fruits</option>
+                            <option value="Grains & Crops">Grains & Crops</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sub-Category</label>
+                        <select id="subCategory" required disabled>
+                            <option value="">Select Sub-Category...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status: Item Selection</label>
                         <select id="itemNameSelect" required disabled>
                             <option value="">Select Item Name...</option>
                         </select>
-                        <input type="text" id="itemName" placeholder="Or type custom name..." style="display: none;">
+                        <input type="text" id="itemName" placeholder="Or type custom name..."
+                            style="display: none; margin-top: 5px;">
                     </div>
-                    <div>
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Price per unit</label>
-                        <input type="number" step="0.01" id="itemPrice" placeholder="Price" required
-                            style="width: 100%;">
+                    <div class="form-group">
+                        <label class="form-label">Price per unit</label>
+                        <input type="number" step="0.01" id="itemPrice" placeholder="Price" required>
                     </div>
-                    <div>
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Unit</label>
-                        <select id="itemUnit" required style="width: 100%;">
+                    <div class="form-group">
+                        <label class="form-label">Unit</label>
+                        <select id="itemUnit" required>
                             <option value="kg">kg</option>
                             <option value="liter">liter</option>
                             <option value="piece">piece</option>
                             <option value="packet">packet</option>
                         </select>
                     </div>
-                    <div>
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Stock Quantity</label>
-                        <input type="number" id="itemQuantity" placeholder="Quantity" required style="width: 100%;">
+                    <div class="form-group">
+                        <label class="form-label">Stock Quantity</label>
+                        <input type="number" id="itemQuantity" placeholder="Quantity" required>
                     </div>
-                    <div id="expiryField" style="display: none;">
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Expiry Date (Dairy only)</label>
-                        <input type="date" id="itemExpiry" style="width: 100%;">
+                    <div id="expiryField" class="form-group" style="display: none;">
+                        <label class="form-label">Expiry Date (Dairy only)</label>
+                        <input type="date" id="itemExpiry">
                     </div>
-                    <div>
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Min Stock</label>
-                        <input type="number" id="itemThreshold" placeholder="Alert Level" value="10" required
-                            style="width: 100%;">
+                    <div class="form-group">
+                        <label class="form-label">Min Stock Alert</label>
+                        <input type="number" id="itemThreshold" placeholder="Alert Level" value="10" required>
                     </div>
-                    <button type="submit" style="grid-column: span 2;">Update Stock</button>
+                    <div class="form-group full-width">
+                        <button type="submit" style="width: 100%;">Update Stock</button>
+                    </div>
                 </form>
             </div>
 
@@ -358,19 +369,28 @@
 
         async function fetchStats() {
             try {
+                console.log('=== fetchStats() called ===');
                 // Fetch profile first for header
                 const profileRes = await fetch('/api/user/profile', { headers: { 'Authorization': token } });
                 const profileData = await profileRes.json();
                 document.getElementById('userName').innerText = profileData.username;
                 document.getElementById('userRole').innerText = profileData.role;
 
+                console.log('Fetching /api/reports/stats...');
                 const response = await fetch('/api/reports/stats', { headers: { 'Authorization': token } });
                 const data = await response.json();
+                console.log('Stats API Response:', data);
+                console.log('Revenue Today:', data.revenue?.today);
+                console.log('Orders Today:', data.orders?.today);
 
                 document.getElementById('stat-pending').innerText = data.orders.pending !== undefined ? data.orders.pending : 0;
                 document.getElementById('stat-packing').innerText = data.orders.toPack !== undefined ? data.orders.toPack : 0;
                 document.getElementById('stat-delivery').innerText = data.orders.readyForDelivery !== undefined ? data.orders.readyForDelivery : 0;
                 document.getElementById('stat-sales-today').innerText = `$${(data.revenue.today || 0).toFixed(2)}`;
+                if (document.getElementById('stat-volume-staff')) {
+                    document.getElementById('stat-volume-staff').innerText = data.orders.volume || 0;
+                }
+                console.log('Updated stat-sales-today element to:', document.getElementById('stat-sales-today').innerText);
 
                 // Low stock alert check only (no card needed if not requested, or re-add logic if user wants it)
                 // The global alert container handles the visual warning.
@@ -382,7 +402,9 @@
                     const items = await invRes.json();
                     checkLowStock(items);
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error('fetchStats ERROR:', err);
+            }
         }
         fetchStats();
 
@@ -455,6 +477,12 @@
 
         // Create order listener (handled by orders.js if form ID matches)
         // We can keep a specific alert if we want, but orders.js will now handle the fetch.
+    </script>
+    <script src="js/dashboard_charts.js"></script>
+    <script>
+        if (typeof window.initDashboardCharts === 'function') {
+            setTimeout(window.initDashboardCharts, 500);
+        }
     </script>
 </body>
 

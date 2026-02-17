@@ -43,8 +43,7 @@ window.populateProductSelect = async function () {
 };
 
 function setupOrderFormLogic() {
-    const mainEl = document.getElementById('orderMainCategory');
-    const subEl = document.getElementById('orderSubCategory');
+    const mainEl = document.getElementById('orderCategory'); // Changed from orderMainCategory
     const itemEl = document.getElementById('orderItemNameSelect');
     const invIdEl = document.getElementById('orderInventoryId');
     const priceInput = document.getElementById('orderPrice');
@@ -53,99 +52,43 @@ function setupOrderFormLogic() {
     if (!mainEl) return;
 
     mainEl.onchange = function () {
-        const main = this.value;
-        subEl.innerHTML = '<option value="">Select Category...</option>';
+        const selectedCategory = this.value;
         itemEl.innerHTML = '<option value="">Select Item...</option>';
-        subEl.disabled = !main;
-        itemEl.disabled = true;
+        itemEl.disabled = !selectedCategory;
         invIdEl.value = '';
         priceInput.value = '';
         stockPreview.innerText = 'Available Stock: --';
 
-        if (main && subCategories[main]) {
-            subCategories[main].forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat;
-                opt.textContent = cat;
-                subEl.appendChild(opt);
-            });
-        }
-    };
+        if (selectedCategory) {
+            console.log(`Filtering for Category: "${selectedCategory}"`);
 
-    subEl.onchange = function () {
-        const main = mainEl.value;
-        const sub = this.value;
-        itemEl.innerHTML = '<option value="">Select Item...</option>';
-        itemEl.disabled = !sub;
-        invIdEl.value = '';
-        priceInput.value = '';
-        stockPreview.innerText = 'Available Stock: --';
-
-        if (sub) {
-            console.log(`DEBUG: Filtering for Main: "${main}", Sub: "${sub}"`);
             const filtered = currentInventory.filter(item => {
-                const category = (item.category || '').toLowerCase();
-                const parts = category.split(' - ').map(p => p.trim());
-                const itemName = (item.item_name || '').toLowerCase();
+                const itemCat = (item.category || '').toLowerCase();
+                const targetCat = selectedCategory.toLowerCase();
 
-                // Normalize "Organic Vegetable" and "Organic Products"
-                let itemMain = parts[0];
-                if (itemMain.includes('organic')) itemMain = 'organic vegetable';
-                if (itemMain.includes('dairy')) itemMain = 'dairy product';
-
-                const targetMain = main.toLowerCase();
-                const targetSub = sub.toLowerCase();
-
-                const matchMain = (itemMain === targetMain || itemMain.includes(targetMain) || targetMain.includes(itemMain));
-
-                // If item has a sub-category, it must match
-                if (parts.length >= 2) {
-                    return matchMain && parts[1].toLowerCase() === targetSub;
-                }
-
-                // If item has NO sub-category, attempt keyword-based matching or 'General' catch-all
-                if (matchMain) {
-                    if (targetSub === 'general') return true;
-
-                    // Keyword mapping for fuzzy matching (aligned with sub-categories)
-                    const keywords = {
-                        'leafy vegetables': ['spinach', 'coriander', 'fenugreek', 'lettuce', 'cabbage', 'mint', 'kale', 'palak', 'methi'],
-                        'regular vegetables': ['tomato', 'potato', 'onion', 'eggplant', 'brinjal', 'cauliflower', 'carrot', 'peas', 'capsicum', 'radish', 'okra', 'lady finger', 'beans', 'chilli', 'ginger', 'garlic', 'beetroot'],
-                        'seasonal / special': ['pumpkin', 'gourd', 'corn', 'cucumber', 'broccoli', 'mushroom', 'sweet potato', 'corn'],
-                        'seeds & pulses': ['dal', 'seeds', 'pulses', 'lentils', 'gram'],
-                        'milk products': ['milk', 'dairy', 'buffalo', 'cow'],
-                        'processed dairy': ['paneer', 'curd', 'cheese', 'butter', 'yogurt', 'cream', 'mozzarella', 'cheddar'],
-                        'value-added products': ['ghee', 'khoya', 'mawa', 'butter milk', 'lassi', 'shrikhand'],
-                        'farm animals': ['lamb', 'beef', 'pork', 'chicken', 'goat', 'mutton', 'hen', 'duck'],
-                        'seasonal fruits': ['apple', 'banana', 'orange', 'grape', 'mango', 'blueberry', 'strawberry', 'peach', 'plum', 'pear'],
-                        'exotic fruits': ['kiwi', 'pineapple', 'watermelon', 'dragon fruit', 'avocado', 'pomegranate', 'papaya'],
-                        'organic grains': ['rice', 'wheat', 'barley', 'rye', 'oats', 'millet', 'corn', 'quinoa'],
-                        'cereals': ['millet', 'sorghum', 'ragi', 'bajra', 'jowar']
-                    };
-
-                    const subKeywords = keywords[targetSub];
-                    if (subKeywords && subKeywords.some(k => itemName.includes(k))) {
-                        return true;
-                    }
-                }
-
-                return false;
+                // Flexible matching: "Organic Vegetable" matches "Organic Vegetable - Leafy"
+                return itemCat.includes(targetCat) || targetCat.includes(itemCat.split(' - ')[0]);
             });
 
-            console.log(`DEBUG: Found ${filtered.length} matching products`);
+            console.log(`Found ${filtered.length} products`);
+
             filtered.forEach(item => {
                 const unit = item.unit || 'kg';
                 const opt = document.createElement('option');
                 opt.value = item.id;
-                opt.textContent = `${item.item_name} (Unit: ${unit})`;
+                opt.textContent = `${item.item_name} (Stock: ${item.quantity} ${unit})`;
+
                 if (item.quantity <= 0) {
                     opt.disabled = true;
-                    opt.textContent += ' (Out of Stock)';
+                    opt.textContent += ' - Out of Stock';
+                    opt.style.color = 'red';
                 }
                 itemEl.appendChild(opt);
             });
         }
     };
+
+
 
     itemEl.onchange = function () {
         const selectedId = parseInt(this.value);
@@ -168,7 +111,7 @@ if (createOrderForm) {
     createOrderForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const customerName = document.getElementById('orderCustomerName').value || 'Self';
+        const customerName = document.getElementById('customerName').value || 'Self';
         const inventoryId = document.getElementById('orderInventoryId').value;
         const quantity = parseInt(document.getElementById('orderQuantity').value);
         const customPrice = parseFloat(document.getElementById('orderPrice').value);

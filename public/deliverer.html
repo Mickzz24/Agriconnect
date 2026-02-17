@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriConnect - Deliverer Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="dashboard.css">
     <style>
         .stats-grid {
@@ -18,11 +18,12 @@
     </style>
 </head>
 
-<body>
+<body class="role-deliverer">
     <div class="sidebar">
-        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="logo"><i class="fas fa-seedling"></i> AgriConnect: Organic & Dairy Sales Analyzer</div>
         <div class="menu-item active" onclick="switchSection('Dashboard')"><i class="fas fa-home"></i> Dashboard</div>
-        <div class="menu-item" onclick="switchSection('My Deliveries')"><i class="fas fa-truck"></i> My Deliveries</div>
+        <div class="menu-item" onclick="switchSection('My Deliveries')"><i class="fas fa-truck-fast"></i> My Deliveries
+        </div>
     </div>
 
     <div class="main-content">
@@ -34,7 +35,7 @@
                     <span id="userName">Loading...</span>
                     <span id="userRole" class="role-label" style="background: #e1f5fe; color: #0288d1;">Deliverer</span>
                 </div>
-                <button class="btn-logout" id="logoutBtn">Logout</button>
+                <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
 
@@ -52,6 +53,11 @@
                 <div class="card">
                     <h3>Completed Deliveries</h3>
                     <div class="value" id="stat-completed" style="color: #2ecc71;">0</div>
+                </div>
+                <!-- Integrated Logistics Metric -->
+                <div class="card">
+                    <h3>Total System Deliveries</h3>
+                    <div class="value" id="stat-total-system" style="color: #8e44ad;">0</div>
                 </div>
             </div>
 

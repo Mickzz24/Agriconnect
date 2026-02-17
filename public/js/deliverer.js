@@ -36,6 +36,13 @@ window.fetchDelivererStats = async function () {
         document.getElementById('stat-transit').innerText = inTransit;
         document.getElementById('stat-completed').innerText = completed;
 
+        // Total System Volume Integration
+        const statsRes = await fetch('/api/reports/stats', { headers: { 'Authorization': token } });
+        const statsData = await statsRes.json();
+        if (document.getElementById('stat-total-system')) {
+            document.getElementById('stat-total-system').innerText = statsData.orders.volume || 0;
+        }
+
         // Priority List
         const priorityList = document.getElementById('priority-list');
         const priorityOrders = orders.filter(o => o.status === 'Packed' || o.status === 'Shipped').slice(0, 5);

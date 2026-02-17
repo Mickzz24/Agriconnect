@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriConnect - User Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="dashboard.css">
@@ -14,12 +14,12 @@
 
 <body>
     <div class="sidebar">
-        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
-        <div class="menu-item active"><i class="fas fa-home"></i> Dashboard</div>
+        <div class="logo"><i class="fas fa-seedling"></i> AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="menu-item active"><i class="fas fa-house"></i> Dashboard</div>
         <div class="menu-item"><i class="fas fa-leaf"></i> Products</div>
-        <div class="menu-item"><i class="fas fa-history"></i> Order History</div>
-        <div class="menu-item"><i class="fas fa-truck"></i> Track Status</div>
-        <div class="menu-item"><i class="fas fa-credit-card"></i> Make Payments</div>
+        <div class="menu-item"><i class="fas fa-basket-shopping"></i> Order History</div>
+        <div class="menu-item"><i class="fas fa-truck-moving"></i> Track Status</div>
+        <div class="menu-item"><i class="fas fa-wallet"></i> Make Payments</div>
     </div>
 
     <div class="main-content">
@@ -31,7 +31,7 @@
                     <span id="userName">Loading...</span>
                     <span id="userRole" class="role-label"></span>
                 </div>
-                <button class="btn-logout" id="logoutBtn">Logout</button>
+                <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
 
@@ -110,6 +110,8 @@
                                 id="total-organic">0</span></span>
                         <span class="stat-badge dairy"><i class="fas fa-cheese"></i> Dairy: <span
                                 id="total-dairy">0</span></span>
+                        <span class="stat-badge volume" style="background: #e3f2fd; color: #1565c0;"><i
+                                class="fas fa-truck-moving"></i> Global Sales: <span id="global-volume">0</span></span>
                     </div>
                 </div>
 
@@ -311,6 +313,13 @@
 
                 populateRecommendations(globalProducts);
                 renderUserShop(globalProducts, currentFilter);
+
+                // Fetch global stats for volume badge
+                const statsRes = await fetch('/api/reports/stats', { headers: { 'Authorization': token } });
+                const statsData = await statsRes.json();
+                if (document.getElementById('global-volume')) {
+                    document.getElementById('global-volume').innerText = statsData.orders.volume || 0;
+                }
             } catch (err) { console.error(err); }
         }
 

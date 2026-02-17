@@ -80,6 +80,13 @@ async function fetchAccountantStats() {
 
         const profitVal = document.getElementById('card-monthly-profit');
         profitVal.style.color = data.financials.monthlyProfit >= 0 ? '#27ae60' : '#e74c3c';
+
+        if (document.getElementById('card-tax-estimate')) {
+            document.getElementById('card-tax-estimate').innerText = `$${(data.financials.taxEstimate || 0).toFixed(2)}`;
+        }
+        if (document.getElementById('card-margin')) {
+            document.getElementById('card-margin').innerText = `${data.financials.operatingMargin}%`;
+        }
     } catch (e) { console.error("Stats error:", e); }
 }
 

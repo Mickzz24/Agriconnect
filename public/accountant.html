@@ -7,7 +7,7 @@
     <title>AgriConnect: Accountant Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -125,9 +125,9 @@
     </style>
 </head>
 
-<body>
+<body class="role-accountant">
     <div class="sidebar">
-        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="logo"><i class="fas fa-seedling"></i> AgriConnect: Organic & Dairy Sales Analyzer</div>
         <div class="menu-item active" onclick="switchSection('Dashboard')"><i class="fas fa-home"></i> Dashboard</div>
 
         <div class="menu-item" onclick="switchSection('Expenses')"><i class="fas fa-file-invoice-dollar"></i> Expenses
@@ -148,7 +148,7 @@
                     <span id="userName">Loading...</span>
                     <span id="userRole" class="role-label">Accountant</span>
                 </div>
-                <button class="btn-logout" id="logoutBtn">Logout</button>
+                <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
 
@@ -170,6 +170,15 @@
                 <div class="card">
                     <h3>Pending Payments</h3>
                     <div class="value" id="card-pending-payments" style="color: #f39c12;">0</div>
+                </div>
+                <!-- Integrated Accountant KPIs -->
+                <div class="card">
+                    <h3>Estimated Tax (15%)</h3>
+                    <div class="value" id="card-tax-estimate" style="color: #e67e22;">$0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Operating Margin</h3>
+                    <div class="value" id="card-margin" style="color: #1abc9c;">0%</div>
                 </div>
             </div>
 
@@ -387,14 +396,14 @@
         <div class="modal-content">
             <span class="close" onclick="closeExpenseModal()">&times;</span>
             <h2 id="expenseModalTitle" style="margin-bottom: 25px; color: #27ae60;">Add New Expense</h2>
-            <form id="expenseForm">
+            <form id="expenseForm" class="form-grid">
                 <input type="hidden" id="expenseId">
-                <div>
-                    <label>Description</label>
+                <div class="form-group full-width">
+                    <label class="form-label">Description</label>
                     <input type="text" id="expDescription" placeholder="e.g., Monthly Power Bill" required>
                 </div>
-                <div>
-                    <label>Category</label>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
                     <select id="expCategory" required>
                         <option value="Transport">Transport</option>
                         <option value="Packaging">Packaging</option>
@@ -405,16 +414,18 @@
                         <option value="Others">Others</option>
                     </select>
                 </div>
-                <div>
-                    <label>Amount ($)</label>
+                <div class="form-group">
+                    <label class="form-label">Amount ($)</label>
                     <input type="number" step="0.01" id="expAmount" placeholder="0.00" required>
                 </div>
-                <div style="margin-bottom: 25px;">
-                    <label>Date</label>
+                <div class="form-group full-width">
+                    <label class="form-label">Date</label>
                     <input type="date" id="expDate" required>
                 </div>
-                <button type="submit" class="btn-prime" style="width: 100%; justify-content: center;">Save
-                    Transaction</button>
+                <div class="form-group full-width">
+                    <button type="submit" class="btn-prime" style="width: 100%; justify-content: center;">Save
+                        Transaction</button>
+                </div>
             </form>
         </div>
     </div>

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriConnect: Business Analytics</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -38,17 +38,16 @@
     <link rel="stylesheet" href="dashboard.css">
 </head>
 
-<body>
+<body class="role-owner">
     <div class="sidebar">
-        <div class="logo">AgriConnect: Organic & Dairy Sales Analyzer</div>
+        <div class="logo"><i class="fas fa-seedling"></i> AgriConnect: Organic & Dairy Sales Analyzer</div>
         <div class="menu-item active"><i class="fas fa-home"></i> Dashboard</div>
         <div class="menu-item"><i class="fas fa-shopping-cart"></i> Orders</div>
         <div class="menu-item"><i class="fas fa-boxes"></i> Inventory</div>
-        <div class="menu-item"><i class="fas fa-money-bill-wave"></i> Expenses</div>
+        <div class="menu-item"><i class="fas fa-file-invoice-dollar"></i> Expenses</div>
         <div class="menu-item"><i class="fas fa-users"></i> Staff & Deliverers</div>
         <div class="menu-item"><i class="fas fa-chart-line"></i> Analytics</div>
         <div class="menu-item"><i class="fas fa-calculator"></i> Profit Summary</div>
-        <div class="menu-item"><i class="fas fa-user-cog"></i> Settings</div>
     </div>
 
     <div class="main-content">
@@ -60,7 +59,7 @@
                     <span id="userName">Loading...</span>
                     <span id="userRole" class="role-label"></span>
                 </div>
-                <button class="btn-logout" id="logoutBtn">Logout</button>
+                <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </div>
 
@@ -88,6 +87,34 @@
                     <h3>Pending Deliverers</h3>
                     <div class="value" id="stat-pending-deliverers" style="color: #f39c12;">0</div>
                 </div>
+                <!-- Integrated KPIs -->
+                <div class="card">
+                    <h3>Customer Growth</h3>
+                    <div class="value" id="stat-growth" style="color: #27ae60;">+0%</div>
+                </div>
+                <div class="card">
+                    <h3>Avg Rating</h3>
+                    <div class="value" id="stat-rating" style="color: #f1c40f;">0.0 <i class="fas fa-star"></i></div>
+                </div>
+                <div class="card">
+                    <h3>Total Sales Volume</h3>
+                    <div class="value" id="stat-volume" style="color: #3498db;">0</div>
+                </div>
+            </div>
+
+            <!-- Integrated Monthly Target Progress Section -->
+            <div class="card"
+                style="margin-top: 25px; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>Monthly Revenue Target</h3>
+                    <span style="font-weight: 600; font-size: 1.2rem;" id="target-percent">0%</span>
+                </div>
+                <div style="background: rgba(255,255,255,0.2); height: 12px; border-radius: 6px; margin: 15px 0;">
+                    <div id="target-progress-bar"
+                        style="background: white; height: 100%; border-radius: 6px; width: 0%; transition: width 1s ease-in-out;">
+                    </div>
+                </div>
+                <p style="font-size: 0.9rem; opacity: 0.9;" id="target-status">Loading target progress...</p>
             </div>
 
             <div class="status-card">
@@ -129,53 +156,60 @@
 
             <div id="product-form-card" class="section-container" style="display: none; margin-bottom: 30px;">
                 <h3>Manual Stock Adjustment</h3>
-                <form id="add-inventory-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <select id="mainCategory" required>
-                        <option value="">Select Category...</option>
-                        <option value="Organic Vegetable">Organic Vegetable</option>
-                        <option value="Dairy Product">Dairy Product</option>
-                        <option value="Livestock">Livestock</option>
-                        <option value="Fruits">Fruits</option>
-                        <option value="Grains & Crops">Grains & Crops</option>
-                    </select>
-                    <select id="subCategory" required disabled>
-                        <option value="">Select Sub-Category...</option>
-                    </select>
-                    <div style="grid-column: span 1; display: flex; flex-direction: column; gap: 5px;">
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Status: Item Selection</label>
+                <form id="add-inventory-form" class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select id="mainCategory" required>
+                            <option value="">Select Category...</option>
+                            <option value="Organic Vegetable">Organic Vegetable</option>
+                            <option value="Dairy Product">Dairy Product</option>
+                            <option value="Livestock">Livestock</option>
+                            <option value="Fruits">Fruits</option>
+                            <option value="Grains & Crops">Grains & Crops</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sub-Category</label>
+                        <select id="subCategory" required disabled>
+                            <option value="">Select Sub-Category...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status: Item Selection</label>
                         <select id="itemNameSelect" required disabled>
                             <option value="">Select Item Name...</option>
                         </select>
-                        <input type="text" id="itemName" placeholder="Or type custom name..." style="display: none;">
+                        <input type="text" id="itemName" placeholder="Or type custom name..."
+                            style="display: none; margin-top: 5px;">
                     </div>
-                    <div>
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Price per unit</label>
-                        <input type="number" step="0.01" id="itemPrice" placeholder="Price" required
-                            style="width: 100%;">
+                    <div class="form-group">
+                        <label class="form-label">Price per unit</label>
+                        <input type="number" step="0.01" id="itemPrice" placeholder="Price" required>
                     </div>
-                    <div>
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Unit</label>
-                        <select id="itemUnit" required style="width: 100%;">
+                    <div class="form-group">
+                        <label class="form-label">Unit</label>
+                        <select id="itemUnit" required>
                             <option value="kg">kg</option>
                             <option value="liter">liter</option>
                             <option value="piece">piece</option>
                             <option value="packet">packet</option>
                         </select>
                     </div>
-                    <div>
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Stock Quantity</label>
-                        <input type="number" id="itemQuantity" placeholder="Quantity" required style="width: 100%;">
+                    <div class="form-group">
+                        <label class="form-label">Stock Quantity</label>
+                        <input type="number" id="itemQuantity" placeholder="Quantity" required>
                     </div>
-                    <div id="expiryField" style="display: none;">
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Expiry Date (Dairy only)</label>
-                        <input type="date" id="itemExpiry" style="width: 100%;">
+                    <div id="expiryField" class="form-group" style="display: none;">
+                        <label class="form-label">Expiry Date (Dairy only)</label>
+                        <input type="date" id="itemExpiry">
                     </div>
-                    <div>
-                        <label style="font-size: 0.8rem; color: #7f8c8d;">Min Stock</label>
-                        <input type="number" id="itemThreshold" placeholder="Alert Level" value="10" required
-                            style="width: 100%;">
+                    <div class="form-group">
+                        <label class="form-label">Min Stock Alert</label>
+                        <input type="number" id="itemThreshold" placeholder="Alert Level" value="10" required>
                     </div>
-                    <button type="submit" style="grid-column: span 2;">Update Stock</button>
+                    <div class="form-group full-width">
+                        <button type="submit" style="width: 100%;">Update Stock</button>
+                    </div>
                 </form>
             </div>
 
@@ -250,24 +284,40 @@
 
         <!-- Staff & Deliverers Section -->
         <div id="users-section" style="display: none;">
-            <div class="section-container">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button id="toggle-user-form" class="btn-primary" style="border-radius: 50px;">
+                    <i class="fas fa-user-plus"></i> Add New User
+                </button>
+            </div>
+
+            <div id="add-user-card" class="section-container" style="display: none;">
                 <h3>Add New User</h3>
                 <form id="addUserForm">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
-                        <input type="text" id="username" placeholder="Username" required>
-                        <input type="email" id="email" placeholder="Email" required>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            <input type="text" id="username" placeholder="Username" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="email" placeholder="Email" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <input type="password" id="password" placeholder="Password" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Role</label>
+                            <select id="role">
+                                <option value="user">User</option>
+                                <option value="staff">Staff</option>
+                                <option value="accountant">Accountant</option>
+                                <option value="deliverer">Deliverer</option>
+                                <option value="owner">Owner</option>
+                            </select>
+                        </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
-                        <input type="password" id="password" placeholder="Password" required>
-                        <select id="role">
-                            <option value="user">User</option>
-                            <option value="staff">Staff</option>
-                            <option value="accountant">Accountant</option>
-                            <option value="deliverer">Deliverer</option>
-                            <option value="owner">Owner</option>
-                        </select>
-                    </div>
-                    <button type="submit" style="padding: 12px 25px;">Add User</button>
+                    <button type="submit" class="btn-primary">Add User</button>
                 </form>
                 <p id="message" style="margin-top: 10px;"></p>
             </div>
@@ -437,6 +487,30 @@
                 document.getElementById('stat-low-stock').innerText = data.inventory.lowStock;
                 document.getElementById('stat-pending-deliverers').innerText = data.users.pendingDeliverers;
 
+                // Integrated KPI population
+                if (document.getElementById('stat-growth')) {
+                    document.getElementById('stat-growth').innerText = `+${data.users.customerGrowth}%`;
+                }
+                if (document.getElementById('stat-rating')) {
+                    document.getElementById('stat-rating').innerHTML = `${data.users.avgRating} <i class="fas fa-star" style="font-size:0.8em"></i>`;
+                }
+                if (document.getElementById('stat-volume')) {
+                    document.getElementById('stat-volume').innerText = data.orders.volume;
+                }
+
+                // Monthly Target Calculation (Integrated)
+                const monthlyTarget = 50000; // Increased target for integrated dataset
+                const currentMonthRev = data.revenue.month || 0;
+                const percent = Math.min(Math.round((currentMonthRev / monthlyTarget) * 100), 100);
+
+                const percentEl = document.getElementById('target-percent');
+                const barEl = document.getElementById('target-progress-bar');
+                const statusEl = document.getElementById('target-status');
+
+                if (percentEl) percentEl.innerText = `${percent}%`;
+                if (barEl) barEl.style.width = `${percent}%`;
+                if (statusEl) statusEl.innerText = `$${currentMonthRev.toLocaleString()} earned of $${monthlyTarget.toLocaleString()} goal`;
+
                 // Check for alerts immediately
                 if (typeof checkLowStock === 'function') {
                     const invRes = await fetch('/api/inventory');
@@ -496,6 +570,18 @@
                 productCard.style.display = isHidden ? 'block' : 'none';
                 productToggle.innerHTML = isHidden ? 'Close Form' : '<i class="fas fa-plus"></i> Add Current Stock';
                 productToggle.style.backgroundColor = isHidden ? '#e74c3c' : '#27ae60';
+            });
+        }
+
+        // User Form Toggle
+        const userToggle = document.getElementById('toggle-user-form');
+        const userCard = document.getElementById('add-user-card');
+        if (userToggle && userCard) {
+            userToggle.addEventListener('click', () => {
+                const isHidden = userCard.style.display === 'none';
+                userCard.style.display = isHidden ? 'block' : 'none';
+                userToggle.innerHTML = isHidden ? '<i class="fas fa-times"></i> Close Form' : '<i class="fas fa-user-plus"></i> Add New User';
+                userToggle.style.background = isHidden ? '#e74c3c' : 'linear-gradient(to right, #1e8449 0%, #2ecc71 51%, #1e8449 100%)';
             });
         }
 

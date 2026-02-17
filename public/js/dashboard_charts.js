@@ -55,8 +55,8 @@ window.initDashboardCharts = async function () {
 
         renderPie('todaySalesChart', data.todaySales || [], "Today's Products", 'itemName', 'totalQty', false);
         renderBar('weeklySalesChart', data.weeklySales || [], 'Weekly Revenue ($)', 'day', 'amount', 'purple');
-        renderLine('monthlySalesChart', data.monthlySales || [], 'Daily Trend ($)', 'day', 'amount', 'blue');
-        renderBar('yearlySalesChart', data.yearlySales || [], 'Yearly Revenue ($)', 'month', 'amount', 'orange');
+        renderLine('monthlySalesChart', data.monthlySales || [], 'Monthly Revenue Trend ($)', 'day', 'amount', 'blue');
+        renderBar('yearlySalesChart', data.yearlySales || [], 'Yearly Revenue ($)', 'year', 'amount', 'orange');
         renderPie('expenseDistChart', data.expenseDistribution || [], "Expenses Distribution", 'category', 'total', false);
 
         if (data.monthlyWeeklyStats && data.monthlyWeeklyStats.length > 0) {
