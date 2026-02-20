@@ -5036,3 +5036,11 @@ Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_pri
 Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
 Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
 Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;

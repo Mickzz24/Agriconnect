@@ -5,14 +5,26 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from datetime import datetime, timedelta
+from sqlalchemy import create_engine
 
 app = Flask(__name__)
 CORS(app)
 
-import sqlite3
-
 CSV_PATH = os.path.join(os.path.dirname(__file__), '..', 'ML', 'AgricultureData.csv')
-DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'database.sqlite')
+
+# Use DATABASE_URL if available (Vercel Prod with Postgres), else fallback to SQLite
+db_url = os.environ.get('DATABASE_URL')
+if not db_url:
+    db_url = f"sqlite:///{os.path.join(os.path.dirname(__file__), '..', 'database.sqlite')}"
+elif db_url.startswith("postgres://"):
+    # SQLAlchemy requires 'postgresql://' instead of 'postgres://'
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+try:
+    engine = create_engine(db_url)
+except Exception as e:
+    print(f"Error creating engine: {e}")
+    engine = None
 
 def load_data():
     df_csv = None
@@ -40,17 +52,22 @@ def load_data():
         except Exception as e:
             print(f"Error loading CSV: {e}")
 
-    # Load SQL
-    if os.path.exists(DB_PATH):
+    # Load SQL via SQLAlchemy
+    if engine is not None:
         try:
-            conn = sqlite3.connect(DB_PATH)
-            # Only confirmed revenue statuses
-            query = "SELECT createdAt as sale_date, total_amount as total_sales FROM Orders WHERE status IN ('Paid', 'Delivered', 'Shipped', 'Packed', 'Approved')"
-            df_sql = pd.read_sql_query(query, conn)
+            # We use SQLAlchemy engine to read from either Postgres or SQLite
+            query = "SELECT \"createdAt\" as sale_date, total_amount as total_sales FROM \"Orders\" WHERE status IN ('Paid', 'Delivered', 'Shipped', 'Packed', 'Approved')"
+            df_sql = pd.read_sql_query(query, engine)
             df_sql['sale_date'] = pd.to_datetime(df_sql['sale_date'])
-            conn.close()
         except Exception as e:
-            print(f"Error loading SQL: {e}")
+            print(f"Error loading SQL (Postgres/SQLite): {e}")
+            # Fallback for strict SQLite dialect if quotes failed
+            try:
+                query = "SELECT createdAt as sale_date, total_amount as total_sales FROM Orders WHERE status IN ('Paid', 'Delivered', 'Shipped', 'Packed', 'Approved')"
+                df_sql = pd.read_sql_query(query, engine)
+                df_sql['sale_date'] = pd.to_datetime(df_sql['sale_date'])
+            except Exception as e2:
+                print(f"Fallback SQL error: {e2}")
 
     # Merge
     if df_csv is not None and df_sql is not None:
