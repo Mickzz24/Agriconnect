@@ -3,7 +3,7 @@
 window.fetchForecast = async function () {
     try {
         console.log("Fetching advanced analytics...");
-        const response = await fetch('http://localhost:5001/api/analytics/advanced');
+        const response = await fetch('/api/analytics/advanced');
         const data = await response.json();
 
         if (data.error) {
