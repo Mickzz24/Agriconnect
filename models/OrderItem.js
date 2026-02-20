@@ -32,6 +32,11 @@ module.exports = (sequelize, DataTypes) => {
         price: { // Store price at time of order
             type: DataTypes.FLOAT,
             allowNull: false
+        },
+        cost_price: { // Store cost at time of order for accurate profit calc
+            type: DataTypes.FLOAT,
+            allowNull: false,
+            defaultValue: 0.0
         }
     }, {
         sequelize,

@@ -6,6 +6,25 @@ const { Op } = require('sequelize');
 const verifyToken = require('../middleware/authMiddleware');
 const { getCsvStats } = require('../utils/csv_stats');
 
+// Helper to calculate COGS for a period
+async function calculateMonthlyCOGS(startDate, statuses) {
+    const soldItems = await OrderItem.findAll({
+        include: [{
+            model: Order,
+            where: {
+                createdAt: { [Op.gte]: startDate },
+                status: { [Op.in]: statuses }
+            },
+            attributes: []
+        }],
+        attributes: [
+            [db.sequelize.fn('SUM', db.sequelize.where(db.sequelize.col('quantity'), '*', db.sequelize.col('OrderItem.cost_price'))), 'totalCost']
+        ],
+        raw: true
+    });
+    return soldItems[0].totalCost || 0;
+}
+
 // Dashboard Stats
 router.get('/stats', verifyToken, async (req, res) => {
     try {
@@ -15,8 +34,11 @@ router.get('/stats', verifyToken, async (req, res) => {
         today.setHours(0, 0, 0, 0);
         const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-        // For "today" comparisons, use date-only to avoid timezone issues
-        const todayDateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+        // Use local date string construction to avoid UTC shifts
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayDateStr = `${year}-${month}-${day}`; // YYYY-MM-DD Local
 
         // --- SQL Stats ---
         const sqlLowStock = await Inventory.count({
@@ -30,30 +52,52 @@ router.get('/stats', verifyToken, async (req, res) => {
         const revenueStatuses = ['Paid', 'Delivered', 'Shipped', 'Packed', 'Approved'];
 
         const sqlTotalRevenue = (await Order.sum('total_amount', { where: { status: { [Op.in]: revenueStatuses } } }) || 0);
-        const sqlTotalExpense = (await Expense.sum('amount') || 0);
-        const sqlTotalProfit = sqlTotalRevenue - sqlTotalExpense;
 
-        // Use simpler date comparison with Sequelize.literal for SQLite compatibility
+        // Calculate Real COGS (Sum of cost_price * quantity for sold items)
+        const soldItems = await OrderItem.findAll({
+            include: [{
+                model: Order,
+                where: { status: { [Op.in]: revenueStatuses } },
+                attributes: []
+            }],
+            attributes: [
+                [db.sequelize.fn('SUM', db.sequelize.where(db.sequelize.col('quantity'), '*', db.sequelize.col('OrderItem.cost_price'))), 'totalCost']
+            ],
+            raw: true
+        });
+
+        const sqlTotalCOGS = soldItems[0].totalCost || 0;
+        const sqlTotalExpense = (await Expense.sum('amount') || 0);
+
+        // Net Profit = Revenue - COGS - Expenses
+        // If COGS is 0 (old data), we might want to use a fallback, but for now let's be strict or use a hybrid
+        // Hybrid: If cost_price is 0, assume 20% margin? No, user wants real numbers.
+        // Let's stick to the formula. If cost is 0, profit is high (Revenue - Expenses).
+        // This encourages them to enter costs.
+        const sqlTotalProfit = sqlTotalRevenue - sqlTotalCOGS - sqlTotalExpense;
+
+        // SQL Comparisons
+        // For SQLite, we must use 'localtime' to convert UTC stored dates to local timezone
         const sqlTodayOrders = await Order.count({
-            where: db.sequelize.literal(`date(createdAt) = '${todayDateStr}'`)
+            where: db.sequelize.where(db.sequelize.fn('date', db.sequelize.col('createdAt'), 'localtime'), todayDateStr)
         });
         const sqlMonthOrders = await Order.count({ where: { createdAt: { [Op.gte]: firstDayOfMonth } } });
 
         const sqlTodayRevenue = (await Order.sum('total_amount', {
             where: {
                 [Op.and]: [
-                    db.sequelize.literal(`date(createdAt) = '${todayDateStr}'`),
+                    db.sequelize.where(db.sequelize.fn('date', db.sequelize.col('createdAt'), 'localtime'), todayDateStr),
                     { status: { [Op.in]: revenueStatuses } }
                 ]
             }
         }) || 0);
         const sqlMonthRevenue = (await Order.sum('total_amount', { where: { createdAt: { [Op.gte]: firstDayOfMonth }, status: { [Op.in]: revenueStatuses } } }) || 0);
         const sqlMonthExpense = (await Expense.sum('amount', { where: { date: { [Op.gte]: firstDayOfMonth } } }) || 0);
-        const sqlTodayExpense = (await Expense.sum('amount', { where: db.sequelize.literal(`date(createdAt) = '${todayDateStr}'`) }) || 0);
+        const sqlTodayExpense = (await Expense.sum('amount', { where: db.sequelize.where(db.sequelize.fn('date', db.sequelize.col('createdAt'), 'localtime'), todayDateStr) }) || 0);
         const pendingPaymentsCount = await Order.count({ where: { status: 'Pending' } });
 
         // --- Merge Stats ---
-        console.log(`DEBUG: SQL Today Revenue: ${sqlTodayRevenue}, SQL Today Orders: ${sqlTodayOrders}`);
+        console.log(`DEBUG: SQL Today Revenue: ${sqlTodayRevenue}, SQL Today Orders: ${sqlTodayOrders}, TodayStr: ${todayDateStr}`);
 
         let csvTodayRev = 0;
         let csvTodayOrders = 0;
@@ -61,14 +105,20 @@ router.get('/stats', verifyToken, async (req, res) => {
         let csvMonthOrders = 0;
 
         if (csvStats && csvStats.latestDate) {
-            const todayStr = today.toISOString().split('T')[0]; // Using ISO date for comparison
+            console.log(`DEBUG: Comparing CSV Latest Date [${csvStats.latestDate}] with Today [${todayDateStr}]`);
+
             // Check Day Match
-            if (csvStats.latestDate === todayStr) {
+            if (csvStats.latestDate === todayDateStr) {
+                console.log("DEBUG: Daily Stats Matched!");
                 csvTodayRev = csvStats.latestDayRevenue;
                 csvTodayOrders = csvStats.latestDayOrders;
+            } else {
+                console.log("DEBUG: Daily Stats Mismatch");
             }
+
             // Check Month Match (YYYY-MM)
-            if (csvStats.latestDate.substring(0, 7) === todayStr.substring(0, 7)) {
+            if (csvStats.latestDate.substring(0, 7) === todayDateStr.substring(0, 7)) {
+                console.log("DEBUG: Monthly Stats Matched!");
                 csvMonthRev = csvStats.latestMonthRevenue;
                 csvMonthOrders = csvStats.latestMonthOrders;
             }
@@ -100,10 +150,12 @@ router.get('/stats', verifyToken, async (req, res) => {
             },
             financials: {
                 netProfit: finalProfit,
-                monthlyProfit: (csvMonthRev * 0.20) + (sqlMonthRevenue - sqlMonthExpense),
+                netProfit: finalProfit.toFixed(2),
+                // Monthly Profit: Revenue - COGS - Expenses (Calculated accurately)
+                monthlyProfit: (sqlMonthRevenue - sqlMonthExpense - (await calculateMonthlyCOGS(firstDayOfMonth, revenueStatuses))).toFixed(2),
                 pendingPayments: pendingPaymentsCount,
                 taxEstimate: finalProfit * 0.15,
-                operatingMargin: ((finalProfit / finalRevenue) * 100).toFixed(1) || 0
+                operatingMargin: finalRevenue > 0 ? ((finalProfit / finalRevenue) * 100).toFixed(1) : 0
             },
             inventory: {
                 lowStock: sqlLowStock,
@@ -155,31 +207,33 @@ router.get('/charts', verifyToken, async (req, res) => {
         const last7Days = new Date(today); last7Days.setDate(today.getDate() - 7);
         const sqlWeeklySales = await Order.findAll({
             attributes: [
-                [db.sequelize.fn('date', db.sequelize.col('createdAt')), 'day'],
+                [db.sequelize.fn('date', db.sequelize.col('createdAt'), 'localtime'), 'day'],
                 [db.sequelize.fn('SUM', db.sequelize.col('total_amount')), 'amount']
             ],
             where: { createdAt: { [Op.gte]: last7Days }, status: { [Op.in]: revenueStatuses } },
-            group: [db.sequelize.fn('date', db.sequelize.col('createdAt'))], raw: true
+            group: [db.sequelize.fn('date', db.sequelize.col('createdAt'), 'localtime')], raw: true
         });
 
         // 3. Monthly Sales (YYYY-MM Trend)
+        // Note: 'localtime' modifier before strftime might be needed or inside? 
+        // SQLite: strftime('%Y-%m', createdAt, 'localtime')
         const sqlMonthlySales = await Order.findAll({
             attributes: [
-                [db.sequelize.fn('strftime', '%Y-%m', db.sequelize.col('createdAt')), 'day'],
+                [db.sequelize.fn('strftime', '%Y-%m', db.sequelize.col('createdAt'), 'localtime'), 'day'],
                 [db.sequelize.fn('SUM', db.sequelize.col('total_amount')), 'amount']
             ],
             where: { status: { [Op.in]: revenueStatuses } }, // Full history
-            group: [db.sequelize.fn('strftime', '%Y-%m', db.sequelize.col('createdAt'))], raw: true
+            group: [db.sequelize.fn('strftime', '%Y-%m', db.sequelize.col('createdAt'), 'localtime')], raw: true
         });
 
         // 4. Yearly Sales (YYYY)
         const sqlYearlySales = await Order.findAll({
             attributes: [
-                [db.sequelize.fn('strftime', '%Y', db.sequelize.col('createdAt')), 'year'],
+                [db.sequelize.fn('strftime', '%Y', db.sequelize.col('createdAt'), 'localtime'), 'year'],
                 [db.sequelize.fn('SUM', db.sequelize.col('total_amount')), 'amount']
             ],
             where: { status: { [Op.in]: revenueStatuses } }, // Full history
-            group: [db.sequelize.fn('strftime', '%Y', db.sequelize.col('createdAt'))], raw: true
+            group: [db.sequelize.fn('strftime', '%Y', db.sequelize.col('createdAt'), 'localtime')], raw: true
         });
 
         // 5. Expense Distribution
@@ -187,6 +241,7 @@ router.get('/charts', verifyToken, async (req, res) => {
             attributes: ['category', [db.sequelize.fn('SUM', db.sequelize.col('amount')), 'total']],
             group: ['category'], raw: true
         });
+        console.log("DEBUG: SQL Expenses Categories:", sqlExpenses);
 
 
         // --- Merging Logic ---
@@ -250,55 +305,30 @@ router.post('/email-report', verifyToken, async (req, res) => {
         }
 
         const date = new Date(selectedDate);
-        let start, end, reportTitle;
+        const { generateReportData } = require('../utils/reportGenerator');
 
-        // Determine date range
-        if (reportType === 'Daily') {
-            start = new Date(date);
-            end = new Date(date);
-            reportTitle = `Daily Sales Report (${start.toLocaleDateString()})`;
-        } else if (reportType === 'Weekly') {
-            const day = date.getDay();
-            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-            start = new Date(date.setDate(diff));
-            end = new Date(start);
-            end.setDate(start.getDate() + 6);
-            reportTitle = `Weekly Sales Report (${start.toLocaleDateString()} - ${end.toLocaleDateString()})`;
-        } else if (reportType === 'Monthly' || reportType === 'PL' || reportType === 'Expense') {
-            start = new Date(date.getFullYear(), date.getMonth(), 1);
-            end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-            const monthName = start.toLocaleString('default', { month: 'long' });
-            reportTitle = `${reportType === 'PL' ? 'Profit & Loss' : reportType === 'Expense' ? 'Expense' : 'Monthly Sales'} Report - ${monthName} ${start.getFullYear()}`;
+        // Use the centralized utility to generate data
+        const { finalOrders, total, attachment, reportTitle } = await generateReportData(reportType, date);
+
+        // Allow empty reports
+        if (finalOrders.length === 0) {
+            // Log for debug but don't error out
+            console.log("Generating report with 0 orders.");
         }
-
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-
-        // Fetch orders
-        const orders = await Order.findAll({
-            where: {
-                createdAt: { [Op.between]: [start, end] }
-            }
-        });
-
-        if (orders.length === 0) {
-            return res.status(404).json({ message: "No data found for the selected period" });
-        }
-
-        let attachment;
-        const total = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
 
         if (format === 'csv') {
-            let csv = 'ID,Customer,Amount,Status,Date\n';
-            orders.forEach(o => csv += `${o.id},${o.customer_name},${o.total_amount},${o.status},${new Date(o.createdAt).toLocaleDateString()}\n`);
-            csv += `\nTotal Revenue,$${total.toFixed(2)}`;
-
-            attachment = {
-                filename: `${reportType}_Report_${selectedDate}.csv`,
-                content: csv
-            };
+            // If the request is for download (not email), return the data directly
+            if (req.body.action === 'download') {
+                return res.json({
+                    message: "Report generated successfully",
+                    downloadUrl: true,
+                    filename: attachment.filename,
+                    fileContent: attachment.content,
+                    data: finalOrders,
+                    summary: { totalOrders: finalOrders.length, totalRevenue: total }
+                });
+            }
         } else {
-            // Generate PDF (simplified - in production use jsPDF on server)
             return res.status(400).json({ message: "PDF email not yet implemented server-side. Please use CSV format." });
         }
 
@@ -309,7 +339,7 @@ router.post('/email-report', verifyToken, async (req, res) => {
             <p>Please find attached the <strong>${reportTitle}</strong> generated on ${new Date().toLocaleString()}.</p>
             <h3>Summary:</h3>
             <ul>
-                <li><strong>Total Orders:</strong> ${orders.length}</li>
+                <li><strong>Total Orders:</strong> ${finalOrders.length}</li>
                 <li><strong>Total Revenue:</strong> $${total.toFixed(2)}</li>
             </ul>
             <p>Best regards,<br/>AgriConnect System</p>
@@ -336,6 +366,28 @@ router.post('/email-report', verifyToken, async (req, res) => {
     } catch (err) {
         console.error("Error sending report email:", err);
         res.status(500).json({ message: "Error sending report email" });
+    }
+});
+
+// DEBUG ROUTE - REMOVE LATER
+router.get('/debug-stats', async (req, res) => {
+    try {
+        const csvStats = await getCsvStats();
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayDateStr = `${year}-${month}-${day}`;
+
+        res.json({
+            todayDateStr,
+            csvLatestDate: csvStats ? csvStats.latestDate : 'null',
+            match: csvStats && csvStats.latestDate === todayDateStr,
+            matchMonth: csvStats && csvStats.latestDate.substring(0, 7) === todayDateStr.substring(0, 7),
+            csvStats
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 

@@ -53,11 +53,11 @@ window.initDashboardCharts = async function () {
         const data = await response.json();
         console.log("Chart data loaded successfully:", data);
 
-        renderPie('todaySalesChart', data.todaySales || [], "Today's Products", 'itemName', 'totalQty', false);
+        renderPie('todaySalesChart', data.todaySales || [], "Today's Products", 'itemName', 'totalQty', true);
         renderBar('weeklySalesChart', data.weeklySales || [], 'Weekly Revenue ($)', 'day', 'amount', 'purple');
         renderLine('monthlySalesChart', data.monthlySales || [], 'Monthly Revenue Trend ($)', 'day', 'amount', 'blue');
         renderBar('yearlySalesChart', data.yearlySales || [], 'Yearly Revenue ($)', 'year', 'amount', 'orange');
-        renderPie('expenseDistChart', data.expenseDistribution || [], "Expenses Distribution", 'category', 'total', false);
+        renderPie('expenseDistChart', data.expenseDistribution || [], "Expenses Distribution", 'category', 'total', true);
 
         if (data.monthlyWeeklyStats && data.monthlyWeeklyStats.length > 0) {
             renderMonthlyProfitAnalysis(data.monthlyWeeklyStats);
@@ -130,9 +130,29 @@ function safeRender(id, type, data, options) {
 }
 
 function renderPie(id, rawData, title, labelKey, valueKey, isDoughnut = false) {
-    const hasData = rawData && rawData.length > 0;
-    const labels = hasData ? rawData.map(d => d[labelKey] || 'Other') : ["Empty"];
-    const values = hasData ? rawData.map(d => d[valueKey] || 0) : [1];
+    let processData = rawData || [];
+
+    // Group small values into "Others" if more than 6 items
+    if (processData.length > 6) {
+        // Sort descending
+        processData.sort((a, b) => (b[valueKey] || 0) - (a[valueKey] || 0));
+
+        const top5 = processData.slice(0, 5);
+        const others = processData.slice(5);
+
+        if (others.length > 0) {
+            const otherTotal = others.reduce((sum, item) => sum + (item[valueKey] || 0), 0);
+            const otherItem = {};
+            otherItem[labelKey] = 'Others';
+            otherItem[valueKey] = otherTotal;
+            top5.push(otherItem);
+        }
+        processData = top5;
+    }
+
+    const hasData = processData && processData.length > 0;
+    const labels = hasData ? processData.map(d => d[labelKey] || 'Other') : ["Empty"];
+    const values = hasData ? processData.map(d => d[valueKey] || 0) : [1];
     const colors = [
         '#3498db', '#9b59b6', '#f39c12', '#e74c3c', '#1abc9c', '#f1c40f', '#34495e', '#2ecc71'
     ];
@@ -141,12 +161,14 @@ function renderPie(id, rawData, title, labelKey, valueKey, isDoughnut = false) {
         labels: labels,
         datasets: [{
             data: values,
-            backgroundColor: colors,
+            backgroundColor: colors.slice(0, values.length),
             hoverOffset: 15,
             borderWidth: 2,
-            borderColor: '#ffffff'
+            borderColor: '#ffffff',
+            borderRadius: isDoughnut ? 20 : 0
         }]
     }, {
+        cutout: isDoughnut ? '60%' : '0%', // Reduced cutout slightly for better visibility
         plugins: {
             title: {
                 display: true,
@@ -154,7 +176,18 @@ function renderPie(id, rawData, title, labelKey, valueKey, isDoughnut = false) {
                 font: { family: FONT_FAMILY, size: 16, weight: '700' },
                 color: '#2c3e50',
                 padding: { bottom: 20 }
+            },
+            legend: {
+                position: 'right', // Move legend to right to save vertical space
+                labels: {
+                    boxWidth: 12,
+                    padding: 10,
+                    font: { size: 11 }
+                }
             }
+        },
+        layout: {
+            padding: { left: 10, right: 10, top: 0, bottom: 0 }
         }
     });
 }
@@ -288,18 +321,49 @@ function renderFinancialOverview(data) {
         profit[i] = revenue[i] - expenses[i];
     }
 
-    safeRender('financialOverviewChart', 'bar', {
+    safeRender('financialOverviewChart', 'line', {
         labels: months,
         datasets: [
-            { label: 'Revenue', data: revenue, backgroundColor: '#3498db', borderRadius: 4 },
-            { label: 'Expenses', data: expenses, backgroundColor: '#e74c3c', borderRadius: 4 },
-            { label: 'Net Profit', data: profit, type: 'line', borderColor: '#f39c12', backgroundColor: 'transparent', tension: 0.3, pointRadius: 5 }
+            {
+                label: 'Revenue',
+                data: revenue,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: 'Expenses',
+                data: expenses,
+                borderColor: '#e74c3c',
+                backgroundColor: 'transparent',
+                borderDash: [5, 5],
+                tension: 0.4
+            },
+            {
+                label: 'Net Profit',
+                data: profit,
+                borderColor: '#2ecc71',
+                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 3
+            }
         ]
     }, {
         plugins: {
-            title: { display: true, text: 'Financial Overview (Monthly)', font: { size: 16, weight: 'bold' } }
+            title: { display: true, text: 'Financial Overview (Monthly Trend)', font: { size: 16, weight: 'bold' } },
+            tooltip: { mode: 'index', intersect: false }
         },
-        scales: { y: { beginAtZero: true } }
+        scales: {
+            y: { beginAtZero: true },
+            x: { grid: { display: false } }
+        },
+        interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+        }
     });
 }
 
@@ -314,19 +378,29 @@ window.loadProfitSummary = async function () {
     if (!token) return;
 
     try {
+        console.log("Loading Profit Summary...");
         const res = await fetch('/api/reports/stats', { headers: { 'Authorization': token } });
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+
         const data = await res.json();
+        console.log("Profit Summary Data:", data);
 
         const revEl = document.getElementById('span-total-revenue');
         const expEl = document.getElementById('span-total-expenses');
         const profEl = document.getElementById('span-net-profit');
 
-        if (revEl) revEl.innerText = `$${(data.revenue.total || 0).toFixed(2)}`;
-        if (expEl) expEl.innerText = `$${(data.expenses.total || 0).toFixed(2)}`;
+        const totalRevenue = data.revenue.total || 0;
+        const totalExpenses = data.expenses.total || 0;
+        // Use financials.netProfit if available, else calc
+        const netProfit = (data.financials && data.financials.netProfit !== undefined)
+            ? data.financials.netProfit
+            : (totalRevenue - totalExpenses);
 
-        const netProfit = (data.revenue.total || 0) - (data.expenses.total || 0);
+        if (revEl) revEl.innerText = `$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (expEl) expEl.innerText = `$${totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
         if (profEl) {
-            profEl.innerText = `$${netProfit.toFixed(2)}`;
+            profEl.innerText = `$${netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             profEl.style.color = netProfit >= 0 ? '#27ae60' : '#e74c3c';
         }
 

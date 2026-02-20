@@ -6,15 +6,200 @@
  * Restarting with stat
  * Debugger is active!
  * Debugger PIN: 316-640-783
-Traceback (most recent call last):
-  File "/Users/theerdhasjoy/AgriConnect/backend_flask/app.py", line 89, in <module>
-    app.run(debug=True, port=5001)
-  File "/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/flask/app.py", line 662, in run
-    run_simple(t.cast(str, host), port, self, **options)
-  File "/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/werkzeug/serving.py", line 1115, in run_simple
-    run_with_reloader(
-  File "/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/werkzeug/_reloader.py", line 453, in run_with_reloader
-    ensure_echo_on()
-  File "/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/werkzeug/_reloader.py", line 433, in ensure_echo_on
-    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
-termios.error: (4, 'Interrupted system call')
+127.0.0.1 - - [18/Feb/2026 22:17:43] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [18/Feb/2026 22:29:53] "GET /api/health HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [18/Feb/2026 22:33:12] "GET /api/analytics/advanced HTTP/1.1" 200 -
+127.0.0.1 - - [19/Feb/2026 10:07:24] "GET /api/health HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 10:23:15] "GET /api/analytics/advanced HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 10:23:50] "GET /api/analytics/advanced HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 10:24:26] "GET /api/analytics/advanced HTTP/1.1" 200 -
+127.0.0.1 - - [19/Feb/2026 10:28:53] "GET /api/health HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 10:31:31] "GET /api/analytics/advanced HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 10:41:06] "GET /api/analytics/advanced HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 10:41:56] "GET /api/analytics/advanced HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 10:44:37] "GET /api/analytics/advanced HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 10:47:57] "GET /api/analytics/advanced HTTP/1.1" 200 -
+127.0.0.1 - - [19/Feb/2026 17:38:49] "GET /api/health HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 17:39:20] "GET /api/analytics/advanced HTTP/1.1" 200 -
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+/Users/theerdhasjoy/Library/Python/3.9/lib/python/site-packages/sklearn/utils/validation.py:2739: UserWarning: X does not have valid feature names, but LinearRegression was fitted with feature names
+  warnings.warn(
+127.0.0.1 - - [19/Feb/2026 17:40:43] "GET /api/analytics/advanced HTTP/1.1" 200 -
+127.0.0.1 - - [19/Feb/2026 17:55:25] "GET /api/health HTTP/1.1" 200 -
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

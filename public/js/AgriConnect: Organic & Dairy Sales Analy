@@ -1,0 +1,40 @@
+AgriConnect: Organic & Dairy Sales Analyzer
+[0] (122,309)<div >Dashboard />
+[1] (118,401)<div >Products />
+[2] (118,494)<div >Order History />
+[3] (118,586)<div >Track Status />
+[4] (118,678)<div >Make Payments />
+[5] (618,500)<div class='main-content' scrollable='true' />
+	Welcome to AgriConnect
+	Azhar
+	user
+	[6] (844,96)<div  />
+		[7] (827,101)<span >0 />
+		[8] (847,96)<span >Cart />
+	[9] (926,96)<button class='btn-logout' id='logoutBtn'>Logout />
+	Welcome back, Azhar!
+	Discover fresh organic and dairy products from our local farms.
+	Recent Order
+	[10] (571,472)<a href='#'>View All />
+	Order #9
+	Goat Milk
+	$13.00
+	2/15/2026
+	Current Status
+	Pending
+	Order #9 is currently
+	Pending
+	[11] (796,656)<button class='btn-track-slim'>Track Order />
+	Recommended for You
+	[12] (381,922)<div >Rack Lamb />
+		[13] (381,898)<div  />
+			[14] (381,898)<img  />
+		Rack Lamb
+	[15] (618,922)<div >Wagyu Beef />
+		[16] (618,898)<div  />
+			[17] (618,898)<img  />
+		Wagyu Beef
+	[18] (854,922)<div >Oranges Navel />
+		[19] (854,898)<div  />
+			[20] (854,898)<img  />
+		Oranges Navel

@@ -33,6 +33,12 @@ async function getCsvStats() {
             }
         };
 
+        // --- DEMO MODE: Force "Today" to be the last date in CSV ---
+        // This ensures the dashboard always looks alive with data, even if the dataset is old.
+        let effectiveTodayStr = new Date().toISOString().split('T')[0];
+        let isDemoMode = true; // Enable auto-detection
+        // -----------------------------------------------------------
+
         const rows = [];
         const todayProductMap = {};
         const yearlySalesMap = {}; // { 'YYYY': totalRevenue }
@@ -42,36 +48,65 @@ async function getCsvStats() {
         fs.createReadStream(CSV_PATH)
             .pipe(csv())
             .on('data', (row) => {
+                // SCALE DOWN FACTOR: 1000 (To match small business scale)
                 const price = parseFloat(row.price_per_kg);
                 const sold = parseFloat(row.units_sold_kg);
                 const date = row.sale_date;
 
                 if (!isNaN(price) && !isNaN(sold)) {
-                    const revenue = price * sold;
+                    // Reduce revenue magnitude
+                    const revenue = (price * sold) / 1000;
+
                     stats.totalRevenue += revenue;
                     stats.totalOrders++;
                     rows.push({
                         revenue,
                         date,
                         productName: row.product_name,
-                        unitsShipped: parseFloat(row.units_shipped_kg) || 0,
-                        unitsOnHand: parseFloat(row.units_on_hand_kg) || 0
+                        unitsShipped: (parseFloat(row.units_shipped_kg) || 0) / 1000,
+                        unitsOnHand: (parseFloat(row.units_on_hand_kg) || 0) / 1000
                     });
                 }
             })
             .on('end', () => {
                 if (rows.length === 0) return resolve(stats);
 
-                // Sort rows by date descending
                 rows.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                const latestDate = rows[0].date;
-                stats.latestDate = latestDate;
-                const latestMonthStr = latestDate.substring(0, 7); // YYYY-MM
+                // --- DEMO MODE: Date Shifting ---
+                if (isDemoMode && rows.length > 0) {
+                    const latestRowDate = new Date(rows[0].date);
+                    const now = new Date();
+                    const timeDiff = now - latestRowDate;
+
+                    // Only shift if data is old (> 30 days)
+                    if (timeDiff > 30 * 24 * 60 * 60 * 1000) {
+                        console.log(`[CSV Stats] Shifting data by approx ${Math.floor(timeDiff / (1000 * 60 * 60 * 24))} days`);
+                        rows.forEach(row => {
+                            const originalDate = new Date(row.date);
+                            const newDate = new Date(originalDate.getTime() + timeDiff);
+
+                            // Use local date components to match routes/reports.js logic
+                            const y = newDate.getFullYear();
+                            const m = String(newDate.getMonth() + 1).padStart(2, '0');
+                            const d = String(newDate.getDate()).padStart(2, '0');
+                            row.date = `${y}-${m}-${d}`;
+                        });
+                        // Re-sort just in case, though pushing same constant shouldn't change order
+                        effectiveTodayStr = rows[0].date;
+                    } else {
+                        effectiveTodayStr = rows[0].date;
+                    }
+                } else if (rows.length > 0) {
+                    effectiveTodayStr = rows[0].date;
+                }
+
+                stats.latestDate = effectiveTodayStr;
+                const latestMonthStr = effectiveTodayStr.substring(0, 7); // YYYY-MM
 
                 rows.forEach(r => {
                     // KPI Aggregations
-                    if (r.date === latestDate) {
+                    if (r.date === effectiveTodayStr) {
                         stats.latestDayRevenue += r.revenue;
                         stats.latestDayOrders++;
                         todayProductMap[r.productName] = (todayProductMap[r.productName] || 0) + 1;

@@ -37,8 +37,22 @@ window.fetchForecast = async function () {
 
     } catch (err) {
         console.error('Error fetching advanced analytics:', err);
-        if (document.getElementById('sales-trend')) {
-            document.getElementById('sales-trend').innerText = 'AI Module Offline';
+        const trendEl = document.getElementById('sales-trend');
+        const insightsContainer = document.getElementById('ai-insights-container');
+
+        if (trendEl) {
+            trendEl.innerText = 'AI Module Offline';
+            trendEl.style.color = '#e74c3c';
+        }
+
+        if (insightsContainer) {
+            insightsContainer.innerHTML = `
+                <div class="insight-card sales" style="background: linear-gradient(135deg, #95a5a6, #7f8c8d);">
+                    <h4>AI Forecasting</h4>
+                    <div class="value" style="font-size: 1.2rem;">Service Unavailable</div>
+                    <p style="font-size: 0.8rem; margin-top: 5px;">Check if python app.py is running on port 5001</p>
+                </div>
+            `;
         }
     }
 };

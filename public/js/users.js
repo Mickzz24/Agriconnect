@@ -83,8 +83,8 @@
                 <td>
                     <div class="action-buttons">
                         ${approveBtn}
-                        <button class="btn-action btn-edit" onclick="window.editUser(${user.id})" title="Edit Profile"><i class="fas fa-edit"></i></button>
-                        <button class="btn-action btn-danger" onclick="window.deleteUser(${user.id})" title="Remove User"><i class="fas fa-trash"></i></button>
+                        <button class="btn-action btn-icon btn-edit" onclick="window.editUser(${user.id})" title="Edit Profile"><i class="fas fa-edit"></i></button>
+                        <button class="btn-action btn-icon btn-danger" onclick="window.deleteUser(${user.id})" title="Remove User"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             `;

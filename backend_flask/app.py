@@ -23,7 +23,19 @@ def load_data():
         try:
             df_csv = pd.read_csv(CSV_PATH)
             df_csv['sale_date'] = pd.to_datetime(df_csv['sale_date'])
-            df_csv['total_sales'] = df_csv['price_per_kg'] * df_csv['units_sold_kg']
+            
+            # --- DEMO MODE: Shift dates to be current ---
+            max_date = df_csv['sale_date'].max()
+            titles_demo = True
+            if titles_demo and max_date < pd.Timestamp.now() - pd.Timedelta(days=30):
+                shift = pd.Timestamp.now() - max_date
+                # Shift all dates so the last sale happened "today"
+                df_csv['sale_date'] = df_csv['sale_date'] + shift
+                print(f"Shifted data by {shift} for Demo Mode")
+            # --------------------------------------------
+
+            # SCALE DOWN FACTOR: 1000
+            df_csv['total_sales'] = (df_csv['price_per_kg'] * df_csv['units_sold_kg']) / 1000
             df_csv = df_csv[['sale_date', 'total_sales']]
         except Exception as e:
             print(f"Error loading CSV: {e}")
@@ -63,6 +75,11 @@ def advanced_analytics():
         df = load_data()
         if df is None:
             return jsonify({"error": "Dataset not found"}), 404
+
+        # Ensure sale_date is datetime
+        df['sale_date'] = pd.to_datetime(df['sale_date'], errors='coerce')
+        # Drop rows where sale_date conversion failed
+        df = df.dropna(subset=['sale_date'])
 
         # Monthly Data
         df['month'] = df['sale_date'].dt.strftime('%Y-%m')

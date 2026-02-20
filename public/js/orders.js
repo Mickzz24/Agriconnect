@@ -220,34 +220,34 @@ function renderOrders(orders) {
         if (userRole === 'owner' || userRole === 'staff') {
             if (order.status === 'Pending') {
                 actionsHtml = `
-                    <button class="btn-action btn-approve" onclick="window.approveOrder(${order.id})" title="Approve">
-                        <i class="fas fa-check"></i> Approve
+                    <button class="btn-action btn-icon btn-approve" onclick="window.approveOrder(${order.id})" title="Approve">
+                        <i class="fas fa-check"></i>
                     </button>
-                    <button class="btn-action btn-danger" onclick="window.updateOrderStatus(${order.id}, 'Cancelled')" title="Reject">
-                        <i class="fas fa-times"></i> Reject
+                    <button class="btn-action btn-icon btn-danger" onclick="window.updateOrderStatus(${order.id}, 'Cancelled')" title="Reject">
+                        <i class="fas fa-times"></i>
                     </button>`;
             } else {
                 actionsHtml = `
-                    <button class="btn-action btn-danger" onclick="window.deleteOrder(${order.id})" title="Delete">
-                        <i class="fas fa-trash"></i> Delete
+                    <button class="btn-action btn-icon btn-danger" onclick="window.deleteOrder(${order.id})" title="Delete">
+                        <i class="fas fa-trash"></i>
                     </button>`;
 
                 if (order.status === 'Delivered') {
                     actionsHtml += `
-                    <button class="btn-action btn-approve" onclick="window.downloadInvoice(${order.id})" title="Invoice">
-                        <i class="fas fa-file-invoice"></i> Invoice
+                    <button class="btn-action btn-icon btn-approve" onclick="window.downloadInvoice(${order.id})" title="Invoice">
+                        <i class="fas fa-file-invoice"></i>
                     </button>`;
                 }
             }
         } else {
             const isShipped = order.status === 'Shipped' || order.status === 'Delivered';
             actionsHtml = `
-                <button class="btn-action btn-view" title="Track" onclick="window.trackOrder(${order.id})"><i class="fas fa-search-location"></i> Track</button>
-                <button class="btn-action ${isShipped ? 'btn-edit' : ''}" title="Download Invoice" 
+                <button class="btn-action btn-icon btn-view" title="Track" onclick="window.trackOrder(${order.id})"><i class="fas fa-search-location"></i></button>
+                <button class="btn-action btn-icon ${isShipped ? 'btn-edit' : ''}" title="Download Invoice" 
                         onclick="window.downloadInvoice(${order.id})" 
                         style="cursor: ${isShipped ? 'pointer' : 'not-allowed'};" 
                         ${isShipped ? '' : 'disabled'}>
-                    <i class="fas fa-file-invoice"></i> Invoice
+                    <i class="fas fa-file-invoice"></i>
                 </button>`;
         }
 

@@ -190,8 +190,11 @@ window.deleteExpense = async (id) => {
 };
 
 // --- Payments Logic ---
-// --- Payments Logic ---
+let currentPaymentFilter = 'All'; // Store current filter state
+
 async function loadPayments(filterType) {
+    if (filterType) currentPaymentFilter = filterType;
+
     try {
         const response = await fetch('/api/orders', {
             headers: { 'Authorization': token }
@@ -201,7 +204,7 @@ async function loadPayments(filterType) {
         const data = await response.json();
         let orders = (Array.isArray(data) ? data : []).sort((a, b) => b.id - a.id);
 
-        // --- Demo Data Injection ---
+        // --- Demo Data Injection (kept for consistency with existing code) ---
         if (orders.length < 5) {
             const fakeOrders = [
                 { id: 9001, customer_name: "Rahul Sharma", total_amount: 1250.00, payment_method: "COD", status: "Pending" },
@@ -220,11 +223,25 @@ async function loadPayments(filterType) {
 
         let filtered = orders; // Default to all
 
-        if (filterType === 'Paid') filtered = orders.filter(o => o.status === 'Paid' || o.status === 'Delivered');
-        else if (filterType === 'COD') filtered = orders.filter(o => o.payment_method === 'COD');
-        else if (filterType === 'Pending') filtered = orders.filter(o => o.status === 'Pending');
-        else if (filterType === 'Cancelled') filtered = orders.filter(o => o.status === 'Cancelled');
-        // 'All' case is covered by initialization
+        // Use currentPaymentFilter if filterType wasn't passed explicitly (e.g. refresh)
+        const activeFilter = filterType || currentPaymentFilter;
+
+        if (activeFilter === 'Paid') filtered = orders.filter(o => o.status === 'Paid' || o.status === 'Delivered');
+        else if (activeFilter === 'COD') filtered = orders.filter(o => o.payment_method === 'COD');
+        else if (activeFilter === 'Pending') filtered = orders.filter(o => o.status === 'Pending');
+        else if (activeFilter === 'Cancelled') filtered = orders.filter(o => o.status === 'Cancelled');
+
+        // Update active button state
+        const buttons = document.querySelectorAll('#payments-section .btn-prime');
+        buttons.forEach(btn => {
+            if (btn.innerText.includes(activeFilter === 'All' ? 'All' : activeFilter)) {
+                btn.style.opacity = '1';
+                btn.style.transform = 'scale(1.05)';
+            } else {
+                btn.style.opacity = '0.7';
+                btn.style.transform = 'scale(1)';
+            }
+        });
 
         filtered.forEach(o => {
             const tr = document.createElement('tr');
@@ -263,7 +280,8 @@ window.updatePaymentStatus = async (id, status) => {
             body: JSON.stringify({ status })
         });
         if (res.ok) {
-            loadPayments('COD');
+            // Reload using the CURRENT filter so the user context isn't lost
+            loadPayments(currentPaymentFilter);
             fetchAccountantStats();
         }
     } catch (e) { console.error(e); }
@@ -318,9 +336,10 @@ window.downloadReport = async (type, format) => {
         return d >= start && d <= end;
     });
 
+    // If no data, we still generate the report but with a message
     if (orders.length === 0) {
-        alert("No data found for the selected period.");
-        return;
+        // alert("No data found for the selected period."); // Removed blocking check
+        // We proceed with empty array
     }
 
     if (format === 'csv') {

@@ -47,6 +47,7 @@
         <div class="menu-item"><i class="fas fa-file-invoice-dollar"></i> Expenses</div>
         <div class="menu-item"><i class="fas fa-users"></i> Staff & Deliverers</div>
         <div class="menu-item"><i class="fas fa-chart-line"></i> Analytics</div>
+        <div class="menu-item"><i class="fas fa-file-alt"></i> Reports</div>
         <div class="menu-item"><i class="fas fa-calculator"></i> Profit Summary</div>
     </div>
 
@@ -54,6 +55,44 @@
         <div class="header">
             <h1 id="page-title">Dashboard</h1>
             <div style="display: flex; align-items: center;">
+                <!-- Notification Bell -->
+                <div class="notification-wrapper" style="position: relative; margin-right: 20px;">
+                    <style>
+                        .bell-icon-btn {
+                            background: none;
+                            border: none;
+                            font-size: 1.5rem;
+                            color: #ffffff !important;
+                            /* Force White */
+                            cursor: pointer;
+                            position: relative;
+                            transition: all 0.3s ease;
+                            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                        }
+
+                        .bell-icon-btn:hover {
+                            color: #2ecc71 !important;
+                            /* Force Green */
+                            transform: scale(1.1);
+                        }
+                    </style>
+                    <button id="btn-notification-bell" class="bell-icon-btn">
+                        <i class="fas fa-bell"></i>
+                        <span id="notification-badge"
+                            style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: bold; display: none;">0</span>
+                    </button>
+                    <!-- Dropdown -->
+                    <div id="notification-dropdown"
+                        style="display: none; position: absolute; right: 0; top: 40px; width: 350px; background: white; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); z-index: 1000; border: 1px solid #eee; overflow: hidden;">
+                        <div
+                            style="padding: 15px; border-bottom: 1px solid #eee; font-weight: 600; background: #f8f9fa;">
+                            Notifications</div>
+                        <div id="dropdown-list" style="max-height: 300px; overflow-y: auto;">
+                            <div style="padding: 15px; color: #7f8c8d; text-align: center;">Checking...</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="userDisplay" class="user-badge">
                     <i class="fas fa-user-circle"></i>
                     <span id="userName">Loading...</span>
@@ -64,7 +103,7 @@
         </div>
 
         <!-- Dashboard Home Section -->
-        <div id="global-alert-container" style="margin-bottom: 20px;"></div>
+
         <div id="dashboard-section">
             <div class="card-container">
                 <div class="card">
@@ -96,25 +135,29 @@
                     <h3>Avg Rating</h3>
                     <div class="value" id="stat-rating" style="color: #f1c40f;">0.0 <i class="fas fa-star"></i></div>
                 </div>
-                <div class="card">
-                    <h3>Total Sales Volume</h3>
-                    <div class="value" id="stat-volume" style="color: #3498db;">0</div>
+                <div class="card" title="Total weight (kg) of all products sold locally and shipped.">
+                    <h3>Total Sales Volume <i class="fas fa-info-circle" style="font-size: 0.8em; color: #aaa;"></i>
+                    </h3>
+                    <div class="value" id="stat-volume" style="color: #3498db;">0 kg</div>
                 </div>
             </div>
 
             <!-- Integrated Monthly Target Progress Section -->
+            <!-- Integrated Monthly Target Progress Section -->
             <div class="card"
-                style="margin-top: 25px; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>Monthly Revenue Target</h3>
-                    <span style="font-weight: 600; font-size: 1.2rem;" id="target-percent">0%</span>
+                style="margin-top: 30px; margin-bottom: 30px; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: none; box-shadow: 0 10px 25px rgba(39, 174, 96, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="color: white; border-bottom: none; margin: 0; font-size: 1.1rem;">Monthly Revenue Target
+                    </h3>
+                    <span style="font-weight: 700; font-size: 1.4rem;" id="target-percent">0%</span>
                 </div>
-                <div style="background: rgba(255,255,255,0.2); height: 12px; border-radius: 6px; margin: 15px 0;">
+                <div style="background: rgba(255,255,255,0.25); height: 10px; border-radius: 20px; overflow: hidden;">
                     <div id="target-progress-bar"
-                        style="background: white; height: 100%; border-radius: 6px; width: 0%; transition: width 1s ease-in-out;">
+                        style="background: white; height: 100%; border-radius: 20px; width: 0%; transition: width 1s ease-in-out; box-shadow: 0 0 10px rgba(255,255,255,0.5);">
                     </div>
                 </div>
-                <p style="font-size: 0.9rem; opacity: 0.9;" id="target-status">Loading target progress...</p>
+                <p style="font-size: 0.9rem; margin-top: 12px; font-weight: 500;" id="target-status">Loading target
+                    progress...</p>
             </div>
 
             <div class="status-card">
@@ -265,8 +308,14 @@
 
         <!-- Expenses Section -->
         <div id="expenses-section" style="display: none;">
-            <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h3>Expense History</h3>
+            <div class="section-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="border: none; margin: 0;">Expense History</h3>
+                    <button class="btn-primary" onclick="openExpenseModal()"
+                        style="border-radius: 50px; padding: 10px 25px;">
+                        <i class="fas fa-plus"></i> Add Expense
+                    </button>
+                </div>
                 <table id="expenses-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="text-align: left; border-bottom: 2px solid #f0f2f5;">
@@ -297,6 +346,30 @@
                         <div class="form-group">
                             <label class="form-label">Username</label>
                             <input type="text" id="username" placeholder="Username" required>
+                        </div>
+                        <div class="search-bar-container" style="margin-bottom: 20px;">
+                            <input type="text" id="inventorySearch" placeholder="Search inventory..."
+                                class="search-input">
+                        </div>
+
+                        <!-- Quick Stock Modal -->
+                        <div id="quick-stock-modal"
+                            style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+                            <div
+                                style="background:white; padding:20px; border-radius:10px; width:300px; text-align:center;">
+                                <h3>Quick Add Stock</h3>
+                                <p id="quick-stock-name" style="font-weight:bold; color:#2c3e50;"></p>
+                                <input type="number" id="quick-stock-qty" placeholder="Quantity to Add"
+                                    style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:5px;">
+                                <input type="date" id="quick-stock-expiry"
+                                    style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:5px; display:none;">
+                                <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                                    <button id="btn-cancel-quick"
+                                        style="background:#95a5a6; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Cancel</button>
+                                    <button id="btn-save-quick"
+                                        style="background:#27ae60; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Add</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Email</label>
@@ -368,6 +441,62 @@
             </div>
         </div>
 
+        <!-- Reports Section -->
+        <div id="reports-section" style="display: none;">
+            <div class="section-container">
+                <h3>Generate Financial Reports</h3>
+                <h3>Generate Financial Reports</h3>
+                <div
+                    style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label"
+                                style="font-weight: 600; color: #34495e; margin-bottom: 8px; display: block;">Report
+                                Type</label>
+                            <div style="position: relative;">
+                                <select id="reportType" class="form-control"
+                                    style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e0e0e0; background: #f8f9fa; appearance: none; font-family: 'Poppins', sans-serif;">
+                                    <option value="Daily">Daily Sales Report</option>
+                                    <option value="Weekly">Weekly Sales Report</option>
+                                    <option value="Monthly">Monthly Sales Report</option>
+                                    <option value="PL">Profit & Loss Statement</option>
+                                    <option value="Expense">Expense Report</option>
+                                </select>
+                                <i class="fas fa-chevron-down"
+                                    style="position: absolute; right: 15px; top: 15px; color: #95a5a6; pointer-events: none;"></i>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label"
+                                style="font-weight: 600; color: #34495e; margin-bottom: 8px; display: block;">Select
+                                Period</label>
+                            <input type="date" id="reportDate" class="form-control"
+                                style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e0e0e0; background: #f8f9fa; font-family: 'Poppins', sans-serif;">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px;">
+                        <button onclick="sendReport('email')"
+                            style="padding: 12px; background: #3498db; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fas fa-envelope"></i> Email Report
+                        </button>
+                        <button onclick="sendReport('pdf')"
+                            style="padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fas fa-file-pdf"></i> Download PDF
+                        </button>
+                        <button onclick="sendReport('excel')"
+                            style="padding: 12px; background: #27ae60; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </button>
+                    </div>
+
+                    <p id="report-status-msg"
+                        style="margin-top: 5px; text-align: center; font-weight: 500; min-height: 24px;"></p>
+                </div>
+            </div>
+        </div>
+
         <!-- Profit Summary Section -->
         <div id="profit-summary-section" style="display: none;">
             <div class="section-container">
@@ -398,12 +527,86 @@
         </div>
     </div>
 
-    <script src="js/inventory.js?v=1.1"></script>
-    <script src="js/orders.js"></script>
-    <script src="js/expenses.js"></script>
-    <script src="js/users.js"></script>
-    <script src="js/dashboard_charts.js"></script>
-    <script src="js/analytics.js"></script>
+    <!-- Expense Modal -->
+    <div id="expenseModal" class="modal"
+        style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);">
+        <div class="modal-content"
+            style="background: white; margin: 10% auto; padding: 40px; width: 90%; max-width: 500px; border-radius: 20px; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
+            <span class="close" onclick="closeExpenseModal()"
+                style="position: absolute; right: 25px; top: 20px; font-size: 1.5rem; cursor: pointer; color: #aaa;">&times;</span>
+            <h2 id="expenseModalTitle" style="margin-bottom: 25px; color: #27ae60; text-align: center;">Add New Expense
+            </h2>
+            <form id="expenseForm" class="form-grid">
+                <input type="hidden" id="expenseId">
+                <div class="form-group full-width">
+                    <label class="form-label">Description</label>
+                    <input type="text" id="expDescription" placeholder="e.g., Monthly Power Bill" required
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="expCategory" required
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;">
+                        <option value="Transport">Transport</option>
+                        <option value="Packaging">Packaging</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Rent">Rent</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount ($)</label>
+                    <input type="number" step="0.01" id="expAmount" placeholder="0.00" required
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;">
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="expDate" required
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;">
+                </div>
+                <div class="form-group full-width">
+                    <button type="submit" class="btn-primary"
+                        style="width: 100%; justify-content: center; margin-top: 10px;">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Stock Modal -->
+    <div id="quick-stock-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div
+            style="background: white; padding: 25px; border-radius: 12px; width: 300px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+            <h3 id="quick-stock-name" style="margin-top: 0; color: #2c3e50; font-size: 1.1rem;">Add Stock</h3>
+            <div style="margin: 15px 0;">
+                <label style="display: block; font-size: 0.8rem; color: #7f8c8d; margin-bottom: 5px;">Quantity to
+                    Add</label>
+                <input type="number" id="quick-stock-qty" class="form-control" placeholder="Qty" min="1"
+                    style="width: 100%;">
+            </div>
+            <div style="margin: 15px 0;">
+                <input type="date" id="quick-stock-expiry" class="form-control" style="display: none; width: 100%;">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="btn-cancel-quick"
+                    style="background: #95a5a6; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">Cancel</button>
+                <button id="btn-save-quick"
+                    style="background: #2ecc71; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/inventory.js"></script>
+    <script src="js/orders.js?v=1.2"></script>
+    <script src="js/expenses.js?v=1.2"></script>
+    <script src="js/users.js?v=1.1"></script>
+    <script src="js/dashboard_charts.js?v=2.1"></script>
+    <script src="js/analytics.js?v=2.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="js/reports.js?v=1.2"></script>
     <script>
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
@@ -422,6 +625,7 @@
             'Expenses': document.getElementById('expenses-section'),
             'Staff & Deliverers': document.getElementById('users-section'),
             'Analytics': document.getElementById('analytics-section'),
+            'Reports': document.getElementById('reports-section'),
             'Profit Summary': document.getElementById('profit-summary-section')
         };
         const pageTitle = document.getElementById('page-title');
@@ -472,13 +676,28 @@
                 const response = await fetch('/api/reports/stats', {
                     headers: { 'Authorization': token }
                 });
-                const data = await response.json();
 
-                document.getElementById('stat-revenue').innerText = `$${data.revenue.total.toFixed(2)}`;
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server ${response.status}: ${errorText.substring(0, 50)}...`);
+                }
+
+                const data = await response.json();
+                console.log("Dashboard Stats Data:", data); // Debug log
+
+                // Set Revenue
+                if (data.revenue && data.revenue.total !== undefined) {
+                    document.getElementById('stat-revenue').innerText = `$${data.revenue.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                } else {
+                    document.getElementById('stat-revenue').innerText = "No Data";
+                }
+
                 document.getElementById('stat-orders').innerText = `${data.orders.today} / ${data.orders.month}`;
-                const profit = data.financials.netProfit;
+
+                // Profit
+                const profit = (data.financials && data.financials.netProfit !== undefined) ? data.financials.netProfit : 0;
                 const profitEl = document.getElementById('stat-profit');
-                profitEl.innerText = `$${profit.toFixed(2)}`;
+                profitEl.innerText = `$${profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
                 profitEl.className = 'value'; // Reset
                 if (profit >= 0) profitEl.classList.add('text-success');
@@ -495,11 +714,13 @@
                     document.getElementById('stat-rating').innerHTML = `${data.users.avgRating} <i class="fas fa-star" style="font-size:0.8em"></i>`;
                 }
                 if (document.getElementById('stat-volume')) {
-                    document.getElementById('stat-volume').innerText = data.orders.volume;
+                    // Format Volume: Round to 0 decimals and add 'kg'
+                    const vol = Math.round(data.orders.volume || 0);
+                    document.getElementById('stat-volume').innerText = `${vol.toLocaleString()} kg`;
                 }
 
                 // Monthly Target Calculation (Integrated)
-                const monthlyTarget = 50000; // Increased target for integrated dataset
+                const monthlyTarget = 50000;
                 const currentMonthRev = data.revenue.month || 0;
                 const percent = Math.min(Math.round((currentMonthRev / monthlyTarget) * 100), 100);
 
@@ -520,6 +741,9 @@
 
             } catch (err) {
                 console.error("Error fetching stats:", err);
+                document.getElementById('stat-revenue').innerText = "Error";
+                document.getElementById('stat-revenue').title = err.message; // Tooltip with details
+                document.getElementById('stat-profit').innerText = "Error";
             }
         }
 
@@ -573,6 +797,11 @@
             });
         }
 
+        // Ensure profit summary loads if script available
+        if (typeof window.loadProfitSummary === 'function') {
+            window.loadProfitSummary();
+        }
+
         // User Form Toggle
         const userToggle = document.getElementById('toggle-user-form');
         const userCard = document.getElementById('add-user-card');
@@ -584,6 +813,61 @@
                 userToggle.style.background = isHidden ? '#e74c3c' : 'linear-gradient(to right, #1e8449 0%, #2ecc71 51%, #1e8449 100%)';
             });
         }
+
+
+        // Notification Logic
+        const bellBtn = document.getElementById('btn-notification-bell');
+        const dropdown = document.getElementById('notification-dropdown');
+        const badge = document.getElementById('notification-badge');
+
+        bellBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) checkNotifications();
+        });
+
+        document.addEventListener('click', () => { dropdown.style.display = 'none'; });
+        dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+        async function checkNotifications() {
+            const list = document.getElementById('dropdown-list');
+            try {
+                const token = localStorage.getItem('token');
+                // Check Inventory
+                const invRes = await fetch('/api/inventory', { headers: { 'Authorization': token } });
+                const items = await invRes.json();
+                const lowStockItems = items.filter(i => i.quantity <= i.threshold);
+
+                // Check Pending Orders (Owner specific?)
+                // Maybe fetch pending orders count too? For now, stick to user request about "low stock alerts".
+
+                const count = lowStockItems.length;
+                if (count > 0) {
+                    badge.innerText = count;
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+
+                if (count === 0) {
+                    list.innerHTML = `<div style="padding: 20px; text-align: center; color: #2ecc71;"><i class="fas fa-check-circle" style="font-size: 1.5rem; margin-bottom: 10px;"></i><p style="margin: 0; font-size: 0.9rem;">All systems healthy</p></div>`;
+                } else {
+                    list.innerHTML = lowStockItems.map(item => `
+                        <div style="padding: 12px 15px; border-bottom: 1px solid #eee; background: #fff5f5;">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div><div style="font-weight: 600; color: #e74c3c; font-size: 0.9rem;">Low Stock Warning</div><div style="font-size: 0.85rem; color: #444;">${item.item_name}</div></div>
+                                <div style="text-align: right;"><div style="font-weight: bold; color: #c0392b;">${item.quantity} ${item.unit}</div><div style="font-size: 0.75rem; color: #7f8c8d;">Threshold: ${item.threshold}</div></div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error("Error checking notifications:", err);
+            }
+        }
+        checkNotifications();
+        setInterval(checkNotifications, 60000);
 
     </script>
 </body>

@@ -6,6 +6,9 @@ const DELIVERY_FEE = 5.00; // Fixed delivery fee
 // Initialize Cart UI
 document.addEventListener('DOMContentLoaded', () => {
     injectCartUI();
+    // Delay slightly to allow cart data to be present if it's persisted, 
+    // though currently cart is in-memory per session. 
+    // If we want persistence, we'd load from localStorage here.
     updateCartBadge();
 });
 

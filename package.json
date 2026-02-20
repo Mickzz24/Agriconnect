@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently \"npm run server\" \"npm run flask\" \"npm run streamlit\"",
+    "start": "concurrently \"npm run server\" \"npm run flask\" \"npm run streamlit\" \"sleep 4 && open http://localhost:3001\"",
     "server": "node server.js",
-    "flask": "cd backend_flask && python app.py",
-    "streamlit": "python -m streamlit run backend_flask/dashboard/dashboard_ui.py",
+    "flask": "cd backend_flask && python3 app.py",
+    "streamlit": "python3 -m streamlit run backend_flask/dashboard/dashboard_ui.py",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -19,8 +19,10 @@
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
     "csv-parser": "^3.2.0",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1"
   },
   "devDependencies": {

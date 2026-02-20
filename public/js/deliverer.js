@@ -40,7 +40,8 @@ window.fetchDelivererStats = async function () {
         const statsRes = await fetch('/api/reports/stats', { headers: { 'Authorization': token } });
         const statsData = await statsRes.json();
         if (document.getElementById('stat-total-system')) {
-            document.getElementById('stat-total-system').innerText = statsData.orders.volume || 0;
+            // Apply rounding to prevent large floats
+            document.getElementById('stat-total-system').innerText = Math.round(statsData.orders.volume || 0);
         }
 
         // Priority List
@@ -104,12 +105,13 @@ window.fetchDeliveries = async function () {
             const tr = document.createElement('tr');
 
             let actionBtn = '';
+            // Using compact buttons with icons
             if (o.status === 'Packed') {
-                actionBtn = `<button class="btn-action btn-edit" onclick="window.updateDeliveryStatus(${o.id}, 'Shipped')">Start Delivery</button>`;
+                actionBtn = `<div class="action-buttons"><button class="btn-action btn-icon btn-edit" title="Start Delivery" onclick="window.updateDeliveryStatus(${o.id}, 'Shipped')"><i class="fas fa-truck"></i></button></div>`;
             } else if (o.status === 'Shipped') {
-                actionBtn = `<button class="btn-action btn-approve" onclick="window.updateDeliveryStatus(${o.id}, 'Delivered')">Mark Delivered</button>`;
+                actionBtn = `<div class="action-buttons"><button class="btn-action btn-icon btn-approve" title="Mark Delivered" onclick="window.updateDeliveryStatus(${o.id}, 'Delivered')"><i class="fas fa-check"></i></button></div>`;
             } else {
-                actionBtn = `<span style="color: #bdc3c7; font-style: italic;">No Action</span>`;
+                actionBtn = `<span style="color: #bdc3c7; font-size: 0.8rem;">-</span>`;
             }
 
             tr.innerHTML = `

@@ -143,17 +143,56 @@ document.addEventListener('DOMContentLoaded', () => {
             // Sort by id descending to show latest at the top
             inventoryData = data.sort((a, b) => b.id - a.id);
             console.log('DEBUG: Inventory Data Received (Sorted):', inventoryData);
-            renderTable(inventoryData);
+
+            // Re-apply search if exists
+            const term = document.getElementById('inventorySearch') ? document.getElementById('inventorySearch').value : '';
+            filterAndRender(term);
         } catch (error) {
             console.error('Error fetching inventory:', error);
         }
     };
 
+    // Human Readable Number Formatter (e.g. 1.2k)
+    function formatQty(num) {
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'k';
+        }
+        return num;
+    }
+
+    // Search Logic
+    if (document.getElementById('inventorySearch')) {
+        document.getElementById('inventorySearch').addEventListener('input', (e) => {
+            filterAndRender(e.target.value);
+        });
+    }
+
+    function filterAndRender(term) {
+        if (!term) {
+            renderTable(inventoryData);
+            return;
+        }
+        term = term.toLowerCase();
+        const filtered = inventoryData.filter(item =>
+            item.item_name.toLowerCase().includes(term) ||
+            (item.category || '').toLowerCase().includes(term)
+        );
+        renderTable(filtered);
+    }
+
+
+
     function renderTable(items) {
         if (items.length > 0) console.log('DEBUG: First item for render:', items[0]);
         renderMgtTable(items);
         renderOpsTable(items);
-        window.checkLowStock(items); // Trigger alert check
+        // Only run low stock check on FULL list to ensure alerts are accurate
+        // or filtered list? Usually alerts should persist. 
+        // Let's run on full list to keep alerts visible even if filtered out.
+        // Actually, users might want to see alerts for what they filtered.
+        // Let's stick to visible items for table, but maybe independent alerts?
+        // Existing behavior: renderTable called stock check. Let's keep it consistent.
+        window.checkLowStock(items);
     }
 
     window.checkLowStock = function (items) {
@@ -202,14 +241,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Stock Highlight logic
             let statusClass = '';
             let statusText = '';
+            // Define styles for better visibility
             if (item.quantity === 0) {
                 statusClass = 'out-of-stock';
                 statusText = ' (Out of Stock)';
-                tr.style.backgroundColor = 'rgba(231, 76, 60, 0.05)';
+                tr.style.backgroundColor = '#fadbd8'; // Stronger Red
+                tr.style.borderLeft = '5px solid #e74c3c';
             } else if (item.quantity <= item.threshold) {
                 statusClass = 'low-stock';
                 statusText = ' (Low Stock)';
-                tr.style.backgroundColor = 'rgba(241, 196, 15, 0.05)';
+                tr.style.backgroundColor = '#fdebd0'; // Stronger Orange/Yellow
+                tr.style.borderLeft = '5px solid #f39c12';
             }
 
             const catParts = (item.category || '').split(' - ');
@@ -238,8 +280,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${isDairy ? (item.expiry_date || '<span style="color:#e67e22;">Empty</span>') : '-'}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-action btn-edit" title="Edit" onclick="window.editItem(${item.id})"><i class="fas fa-edit"></i> Edit</button>
-                        <button class="btn-action btn-danger" title="Delete" onclick="window.deleteItem(${item.id})"><i class="fas fa-trash"></i> Delete</button>
+                        <button class="btn-action btn-icon btn-quick" title="Quick Add Stock" onclick="console.log('Clicking Quick Stock for ID:', ${item.id}); window.openQuickStock(${item.id})"><i class="fas fa-plus"></i></button>
+                        <button class="btn-action btn-icon btn-edit" title="Edit" onclick="window.editItem(${item.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn-action btn-icon btn-danger" title="Delete" onclick="window.deleteItem(${item.id})"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             `;
@@ -260,11 +303,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (item.quantity === 0) {
                 statusClass = 'out-of-stock';
                 statusText = ' (Out of Stock)';
-                tr.style.backgroundColor = 'rgba(231, 76, 60, 0.05)';
+                tr.style.backgroundColor = '#fadbd8'; // Stronger Red
+                tr.style.borderLeft = '5px solid #e74c3c';
             } else if (item.quantity <= item.threshold) {
                 statusClass = 'low-stock';
                 statusText = ' (Low Stock)';
-                tr.style.backgroundColor = 'rgba(241, 196, 15, 0.05)';
+                tr.style.backgroundColor = '#fdebd0'; // Stronger Orange/Yellow
+                tr.style.borderLeft = '5px solid #f39c12';
             }
 
             const catParts = (item.category || '').split(' - ');
@@ -286,8 +331,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${isDairy ? (item.expiry_date || '<span style="color:#e67e22;">Empty</span>') : '-'}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-action btn-edit" onclick="window.editItem(${item.id})"><i class="fas fa-edit"></i> Edit</button>
-                        <button class="btn-action btn-danger" onclick="window.deleteItem(${item.id})"><i class="fas fa-trash"></i> Delete</button>
+                        <button class="btn-action btn-icon btn-quick" title="Quick Add Stock" onclick="window.openQuickStock(${item.id})"><i class="fas fa-plus"></i></button>
+                        <button class="btn-action btn-icon btn-edit" title="Edit" onclick="window.editItem(${item.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn-action btn-icon btn-danger" title="Delete" onclick="window.deleteItem(${item.id})"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             `;
@@ -545,5 +591,75 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial load if active
     if (document.getElementById('inventory-section').style.display !== 'none') {
         fetchInventory();
+    }
+
+    // --- Quick Stock Logic ---
+    let quickStockId = null;
+    const quickModal = document.getElementById('quick-stock-modal');
+    const quickName = document.getElementById('quick-stock-name');
+    const quickQty = document.getElementById('quick-stock-qty');
+    const quickExpiry = document.getElementById('quick-stock-expiry');
+    const btnSaveQuick = document.getElementById('btn-save-quick');
+    const btnCancelQuick = document.getElementById('btn-cancel-quick');
+
+    window.openQuickStock = function (id) {
+        const item = inventoryData.find(i => i.id === id);
+        if (!item) return;
+
+        quickStockId = id;
+        quickName.innerText = `Add Stock: ${item.item_name}`;
+        quickQty.value = '';
+        quickModal.style.display = 'flex';
+
+        // Show expiry for Dairy
+        const isDairy = /dairy/i.test(item.category || '');
+        quickExpiry.style.display = isDairy ? 'block' : 'none';
+        quickExpiry.value = '';
+    };
+
+    if (btnCancelQuick) {
+        btnCancelQuick.onclick = () => {
+            quickModal.style.display = 'none';
+            quickStockId = null;
+        };
+    }
+
+    if (btnSaveQuick) {
+        btnSaveQuick.onclick = async () => {
+            if (!quickStockId) return;
+            const addedQty = parseInt(quickQty.value);
+            if (isNaN(addedQty) || addedQty <= 0) {
+                alert("Please enter a valid quantity to add.");
+                return;
+            }
+
+            const item = inventoryData.find(i => i.id === quickStockId);
+            if (!item) return;
+
+            const newTotal = item.quantity + addedQty;
+            const updateData = { quantity: newTotal };
+
+            if (quickExpiry.style.display !== 'none' && quickExpiry.value) {
+                updateData.expiry_date = quickExpiry.value;
+            }
+
+            try {
+                const response = await fetch(`/api/inventory/${quickStockId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.ok) {
+                    quickModal.style.display = 'none';
+                    fetchInventory(); // Refresh table
+                } else {
+                    const err = await response.json();
+                    alert(`Error: ${err.error || 'Failed to update stock'}`);
+                }
+            } catch (error) {
+                console.error("Error updating stock:", error);
+            }
+        };
     }
 });

@@ -81,7 +81,8 @@ router.post('/', verifyToken, async (req, res) => {
                 orderId: newOrder.id,
                 inventoryId: item.inventoryId,
                 quantity: item.quantity,
-                price: product.unit_price
+                price: product.unit_price,
+                cost_price: product.cost_price || 0 // Capture current cost
             }, { transaction: t });
 
             // Deduct stock ONLY if status is NOT 'Pending'
@@ -89,14 +90,68 @@ router.post('/', verifyToken, async (req, res) => {
                 await product.update({
                     quantity: product.quantity - item.quantity
                 }, { transaction: t });
+
+                // Check for Low Stock after deduction
+                if (product.quantity <= product.threshold) {
+                    try {
+                        const recipients = await db.User.findAll({ where: { role: ['owner', 'staff', 'accountant'] } });
+                        const emails = recipients.map(u => u.email).filter(e => e);
+                        if (emails.length > 0) {
+                            const { sendLowStockAlert } = require('../utils/emailService');
+                            sendLowStockAlert(emails, product.item_name, product.quantity).catch(console.error);
+                        }
+                    } catch (e) {
+                        console.error('Failed to trigger low stock alert:', e);
+                    }
+                }
             }
         }
 
         await t.commit();
+
+        // --- Send Email Notifications (Async) ---
+        (async () => {
+            try {
+                const { sendOrderConfirmation, sendNewOrderAlert } = require('../utils/emailService');
+                const user = await db.User.findByPk(req.userId);
+
+                // 1. Send Confirmation to User
+                if (user && user.email) {
+                    // Need item names, so we might need to map items array to names if not already there.
+                    // The 'items' in body has inventoryId. We fetched products earlier.
+                    // For simplicity, let's just use the logic that we have access to 'items' loop or re-fetch.
+                    // Since we are outside the transaction/loop now, we can structure a basic list.
+                    // A better way is to accumulate details in the loop above.
+                    // Let's re-fetch the order with includes to be clean.
+                    const fullOrder = await Order.findByPk(newOrder.id, {
+                        include: [{ model: OrderItem, as: 'items', include: [Inventory] }]
+                    });
+
+                    const orderItems = fullOrder.items.map(i => ({
+                        name: i.Inventory ? i.Inventory.item_name : 'Item',
+                        quantity: i.quantity,
+                        price: i.price
+                    }));
+
+                    await sendOrderConfirmation(user.email, newOrder.id, orderItems, total_amount);
+                }
+
+                // 2. Send Alert to Staff/Owner/Accountant
+                const recipients = await db.User.findAll({ where: { role: ['owner', 'staff', 'accountant'] } });
+                const emails = recipients.map(u => u.email).filter(e => e);
+                if (emails.length > 0) {
+                    await sendNewOrderAlert(emails, newOrder.id, user ? user.username : customer_name, total_amount);
+                }
+
+            } catch (e) {
+                console.error("Error sending order emails:", e);
+            }
+        })();
+
         res.status(201).json({ message: "Order created successfully", orderId: newOrder.id });
 
     } catch (err) {
-        await t.rollback();
+        if (!t.finished) await t.rollback();
         console.error("Error creating order:", err);
         res.status(500).json({ message: "Error creating order" });
     }
@@ -108,7 +163,10 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     const t = await db.sequelize.transaction();
     try {
         const order = await Order.findByPk(req.params.id, {
-            include: [{ model: OrderItem, as: 'items' }]
+            include: [
+                { model: OrderItem, as: 'items' },
+                { model: db.User, as: 'User' } // Fetch user for email
+            ]
         });
         if (!order) {
             await t.rollback();
@@ -134,19 +192,14 @@ router.put('/:id/status', verifyToken, async (req, res) => {
                     // Check for Low Stock after deduction
                     if (product.quantity <= product.threshold) {
                         try {
-                            const owners = await db.User.findAll({ where: { role: 'owner' } });
-                            if (owners && owners.length > 0) {
+                            const recipients = await db.User.findAll({ where: { role: ['owner', 'staff', 'accountant'] } });
+                            const emails = recipients.map(u => u.email).filter(e => e);
+                            if (emails.length > 0) {
                                 const { sendLowStockAlert } = require('../utils/emailService');
-                                for (const owner of owners) {
-                                    if (owner.email) {
-                                        sendLowStockAlert(product, owner.email).catch(err => console.error(`Alert error for ${owner.email}:`, err));
-                                    }
-                                }
-                            } else {
-                                console.warn('Low stock alert triggered, but no owner found to email.');
+                                sendLowStockAlert(emails, product.item_name, product.quantity).catch(console.error);
                             }
                         } catch (e) {
-                            console.error('Failed to trigger alert:', e);
+                            console.error('Failed to trigger low stock alert:', e);
                         }
                     }
                 }
@@ -175,9 +228,21 @@ router.put('/:id/status', verifyToken, async (req, res) => {
 
         await order.update(updates, { transaction: t });
         await t.commit();
+
+        // --- Send Email Notifications ---
+        if (order.User && order.User.email && status !== oldStatus) {
+            const { sendOrderStatusUpdate } = require('../utils/emailService');
+            sendOrderStatusUpdate(order.User.email, order.id, status).catch(console.error);
+        }
+
         res.json({ message: "Order status updated", status });
     } catch (err) {
-        await t.rollback();
+        if (!t.finished) await t.rollback(); // Check if finished to avoid double-rollback if commit succeeded but email failed (though await commit is above)
+        // Actually commit is awaited, so catch only catches commit errors or logic before.
+        // If commit succeeds, we are here only if email block throws synchronously? No, email is in try block.
+        // If email fails synchronously, we shouldn't rollback committed transaction.
+        // Correct pattern: Move email logic AFTER commit, or separate try/catch.
+        // But t.finished check handles the rollback safely.
         console.error("Error updating order:", err);
         res.status(500).json({ message: "Error updating order" });
     }

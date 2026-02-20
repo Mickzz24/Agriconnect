@@ -98,7 +98,13 @@
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
                     <h3>Available Farm Products</h3>
                     <div id="filter-controls"
-                        style="display: flex; gap: 10px; background: #fff; padding: 5px; border-radius: 12px; border: 1px solid #eee;">
+                        style="display: flex; gap: 10px; background: #fff; padding: 5px; border-radius: 12px; border: 1px solid #eee; align-items: center;">
+                        <div style="position: relative; margin-right: 10px;">
+                            <i class="fas fa-search"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #95a5a6;"></i>
+                            <input type="text" id="productSearch" placeholder="Search products..."
+                                style="padding: 8px 10px 8px 35px; border: 1px solid #ddd; border-radius: 20px; outline: none; font-size: 0.9rem; width: 200px; transition: all 0.3s;">
+                        </div>
                         <button class="filter-btn active" onclick="filterShop('all')" id="filter-all">All</button>
                         <button class="filter-btn" onclick="filterShop('organic')" id="filter-organic"><i
                                 class="fas fa-leaf"></i> Organic</button>
@@ -318,7 +324,8 @@
                 const statsRes = await fetch('/api/reports/stats', { headers: { 'Authorization': token } });
                 const statsData = await statsRes.json();
                 if (document.getElementById('global-volume')) {
-                    document.getElementById('global-volume').innerText = statsData.orders.volume || 0;
+                    // Apply rounding to prevent large floats
+                    document.getElementById('global-volume').innerText = Math.round(statsData.orders.volume || 0);
                 }
             } catch (err) { console.error(err); }
         }
@@ -327,7 +334,9 @@
             currentFilter = type;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`filter-${type}`).classList.add('active');
-            renderUserShop(globalProducts, type);
+
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            renderUserShop(globalProducts, type, searchTerm);
         };
 
         function populateRecentOrder(orders) {
@@ -403,7 +412,13 @@
             });
         }
 
-        function renderUserShop(products, filter = 'all') {
+        // Search Logic
+        document.getElementById('productSearch').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            renderUserShop(globalProducts, currentFilter, term);
+        });
+
+        function renderUserShop(products, filter = 'all', searchTerm = '') {
             const grid = document.getElementById('user-product-grid');
             const totalOrganicEl = document.getElementById('total-organic');
             const totalDairyEl = document.getElementById('total-dairy');
@@ -418,15 +433,25 @@
             // Safer filtering using string conversion
             const getCat = (p) => String(p.category || "").toLowerCase();
 
-            const organic = products.filter(p => {
+            // 1. First, filter by Search Term
+            let filteredProducts = products;
+            if (searchTerm) {
+                filteredProducts = products.filter(p =>
+                    p.item_name.toLowerCase().includes(searchTerm) ||
+                    getCat(p).includes(searchTerm)
+                );
+            }
+
+            // 2. Then split into categories (using the filtered list)
+            const organic = filteredProducts.filter(p => {
                 const c = getCat(p);
                 return c.includes('organic') || c.includes('vegetable') || c.includes('fruit') || c.includes('leafy');
             });
 
-            const dairy = products.filter(p => getCat(p).includes('dairy'));
+            const dairy = filteredProducts.filter(p => getCat(p).includes('dairy'));
 
             // Catch-all for anything else
-            const others = products.filter(p => !organic.includes(p) && !dairy.includes(p));
+            const others = filteredProducts.filter(p => !organic.includes(p) && !dairy.includes(p));
 
             if (totalOrganicEl) totalOrganicEl.innerText = organic.length;
             if (totalDairyEl) totalDairyEl.innerText = dairy.length;
@@ -434,8 +459,8 @@
             grid.innerHTML = '';
             grid.style.display = 'block';
 
-            if (products.length === 0) {
-                grid.innerHTML = '<div class="no-data-msg">No products currently available from our farms.</div>';
+            if (filteredProducts.length === 0) {
+                grid.innerHTML = '<div class="no-data-msg">No products found matching your search.</div>';
                 return;
             }
 
@@ -464,7 +489,7 @@
                 grid.appendChild(subGrid);
             };
 
-            // Apply filter logic
+            // Apply filter logic (category buttons)
             if (filter === 'all' || filter === 'organic') {
                 renderSection(organic, 'Organic Vegetables & Fruits', '#27ae60', 'images/organic.png');
             }
@@ -481,10 +506,27 @@
         function createProductCard(p, categoryImg) {
             const card = document.createElement('div');
             card.className = 'product-card';
-            const isLowStock = p.quantity <= p.threshold;
+
+            // Stock Logic
+            const isOutOfStock = p.quantity <= 0;
+            const isLowStock = !isOutOfStock && p.quantity <= p.threshold;
+
+            // Badge text & class
+            let stockBadge = '';
+            let btnDisabled = '';
+            let cardStyle = '';
+
+            if (isOutOfStock) {
+                stockBadge = '<span class="stock out" style="background: #e74c3c; color: white;">Sold Out</span>';
+                btnDisabled = 'disabled style="background: #95a5a6; cursor: not-allowed; margin-top: 10px;"';
+                cardStyle = 'opacity: 0.7;';
+            } else if (isLowStock) {
+                stockBadge = `<span class="stock low" style="color: #d35400; background: #fdebd0;">Low: Only ${p.quantity} Left!</span>`;
+            } else {
+                stockBadge = '<span class="stock" style="color: #27ae60; background: #e8f5e9;">In Stock</span>';
+            }
 
             // Use local professional images if available, fallback to LoremFlickr
-            // Improved keyword extraction to find the CORE product name (e.g. "Milk" instead of "Whole")
             const baseTypes = ['Milk', 'Cheese', 'Butter', 'Yogurt', 'Beef', 'Chicken', 'Pork', 'Lamb', 'Apples', 'Bananas', 'Oranges', 'Grapes', 'Strawberries', 'Blueberries', 'Peaches', 'Tomatoes', 'Potatoes', 'Onions', 'Lettuce', 'Peppers', 'Carrots', 'Cabbage', 'Corn', 'Rice', 'Wheat', 'Oats', 'Barley', 'Rye'];
             const coreTag = baseTypes.find(t => p.item_name.includes(t)) || 'food';
 
@@ -492,19 +534,19 @@
             const flickrImg = `https://loremflickr.com/320/240/${coreTag},food,fresh?lock=${p.id}`;
 
             card.innerHTML = `
-                <div class="product-image-container" style="height: 180px; overflow: hidden;">
+                <div class="product-image-container" style="height: 180px; overflow: hidden; ${cardStyle}">
                     <img src="${localImg}" alt="${p.item_name}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s;"
                          onerror="if(this.src.includes('${localImg}')){ this.src='${flickrImg}'; } else if(this.src.includes('${flickrImg}')){ this.src='${categoryImg}'; this.onerror=null; }">
                 </div>
-                <div class="product-info">
+                <div class="product-info" style="${cardStyle}">
                     <h4>${p.item_name}</h4>
                     <p class="category">${p.category}</p>
                     <div class="product-meta">
                         <span class="price">$${p.unit_price.toFixed(2)}/${p.unit || 'kg'}</span>
-                        <span class="stock ${isLowStock ? 'low' : ''}">${isLowStock ? 'Low Stock' : 'In Stock'}</span>
+                        ${stockBadge}
                     </div>
-                    <button onclick='addToCart(${JSON.stringify(p)})' class="btn-buy" style="margin-top: 10px;" ${isLowStock ? 'disabled' : ''}>
-                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    <button onclick='addToCart(${JSON.stringify(p)})' class="btn-buy" ${btnDisabled ? btnDisabled : 'style="margin-top: 10px;"'}>
+                        <i class="fas fa-cart-plus"></i> ${isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                     </button>
                 </div>
             `;

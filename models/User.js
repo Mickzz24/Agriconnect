@@ -30,6 +30,10 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: 'staff', // owner, staff, customer, deliverer
             allowNull: false
         },
+        status: {
+            type: DataTypes.STRING,
+            defaultValue: 'Active'
+        },
         is_approved: {
             type: DataTypes.BOOLEAN,
             defaultValue: true, // Auto-approve owners/staff for now, or false for deliverers

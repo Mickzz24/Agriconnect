@@ -22,7 +22,9 @@
 
 body {
     font-family: "Poppins", sans-serif;
-    background: var(--bg-gradient);
+    /* Clean, premium background */
+    background: url('images/dashboard_bg.png') no-repeat center center/cover;
+    background-attachment: fixed;
     display: flex;
     height: 100vh;
     margin: 0;
@@ -32,46 +34,16 @@ body {
     z-index: 0;
 }
 
-body.role-accountant {
-    background: url('images/accounant.jpg') no-repeat center center/cover;
-    background-attachment: fixed;
-}
-
-body.role-accountant::before {
-    background: rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(1px);
-}
-
-body.role-owner {
-    background: url('images/owner.jpg') no-repeat center center/cover;
-    background-attachment: fixed;
-}
-
-body.role-owner::before {
-    background: rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(1px);
-}
-
-body.role-deliverer {
-    background: url('images/delivery.webp') no-repeat center center/cover;
-    background-attachment: fixed;
-}
-
-body.role-deliverer::before {
-    background: rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(1px);
-}
-
+/* Remove role-specific backgrounds to keep the unified premium theme */
+body.role-accountant,
+body.role-owner,
+body.role-deliverer,
 body.role-staff {
-    background: url('images/staff.jpg') no-repeat center center/cover;
+    background: url('images/dashboard_bg.png') no-repeat center center/cover;
     background-attachment: fixed;
 }
 
-body.role-staff::before {
-    background: rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(1px);
-}
-
+/* Enhanced Glass Overlay */
 body::before {
     content: "";
     position: absolute;
@@ -79,8 +51,9 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(2px);
+    /* Darker overlay for better contrast causing text pop */
+    background: rgba(0, 20, 10, 0.4);
+    backdrop-filter: blur(3px);
     z-index: -1;
 }
 
@@ -180,39 +153,46 @@ body::before {
     margin-bottom: 40px;
 }
 
+/* Glass Cards - Now Solid White */
 .card {
-    background: rgba(255, 255, 255, 0.9);
+    background: #ffffff;
     padding: 25px;
     border-radius: 20px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: transform 0.3s;
-    backdrop-filter: blur(5px);
+    /* Soft shadow + subtle border */
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.25);
+    border-color: rgba(0, 0, 0, 0.2);
 }
 
 .card h3 {
     margin-top: 0;
-    color: #7f8c8d;
-    font-size: 0.85rem;
+    color: #5d6d7e;
+    font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-    font-weight: 600;
+    letter-spacing: 1.2px;
+    margin-bottom: 15px;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    /* Separator line */
+    padding-bottom: 8px;
 }
 
 .card .value {
-    font-size: 2rem;
+    font-size: 2.2rem;
+    /* Larger numbers */
     font-weight: 700;
     color: #2c3e50;
 }
 
 /* Status Cards */
 .status-card {
-    background: white;
+    background: #ffffff;
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
@@ -227,13 +207,12 @@ body::before {
 
 /* Sections */
 .section-container {
-    background: rgba(255, 255, 255, 0.9);
+    background: #ffffff;
     padding: 30px;
     border-radius: 20px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
     margin-bottom: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(5px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .section-container h3 {
@@ -381,11 +360,13 @@ td {
     border-bottom: 1px solid #eee;
     color: #2c3e50;
     font-size: 0.9rem;
+    transition: all 0.2s ease;
 }
 
+/* Hover Effect: Green Background with White Text */
 tr:hover td {
-    background-color: #f8f9fa;
-    color: #2c3e50;
+    background-color: var(--primary-green);
+    color: #ffffff;
 }
 
 /* Responsive */
@@ -432,31 +413,64 @@ tr:hover td {
 /* Action Buttons */
 .action-buttons {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 6px;
+    flex-wrap: nowrap;
     align-items: center;
+    justify-content: flex-start;
 }
 
+
+/* Clean, minimal base button */
 .btn-action {
-    padding: 8px 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
     border-radius: 8px;
     border: none;
     cursor: pointer;
     font-size: 0.85rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    font-weight: 600;
-    gap: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
     background: #f8f9fa;
-    color: #444;
+    color: #555;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    white-space: nowrap;
+    /* Prevent wrapping */
+    gap: 6px;
+}
+
+/* Icon-only modifier (square) */
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    justify-content: center;
 }
 
 .btn-action i {
     font-size: 0.9rem;
+    margin: 0;
+}
+
+.btn-action i {
+    font-size: 0.9rem;
+    margin: 0;
+    /* Remove any margin */
+}
+
+.btn-quick {
+    color: #fff;
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    /* Green for Add */
+    box-shadow: 0 4px 10px rgba(46, 204, 113, 0.2);
+}
+
+.btn-quick:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(46, 204, 113, 0.3);
+    filter: brightness(1.1);
 }
 
 .btn-edit {
@@ -601,14 +615,28 @@ tr:hover td {
     margin-top: 25px;
 }
 
+/* Shared Chart Card Style */
+.chart-card,
 .analytics-chart-card {
-    background: white;
-    border-radius: 20px;
-    padding: 25px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    height: 450px;
-    display: flex;
-    flex-direction: column;
+    background: #ffffff;
+    /* High opacity white for visibility */
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    height: 350px;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Charts Grid Layout */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    /* Responsive columns */
+    gap: 30px;
+    /* Gap between charts */
+    margin-top: 30px;
+    margin-bottom: 40px;
 }
 
 #ai-insights-container {

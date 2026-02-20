@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -51,6 +52,10 @@ app.get('/', (req, res) => {
 
 // Start server
 db.sequelize.sync().then(() => {
+    // Initialize Email Scheduler
+    const { initScheduler } = require('./utils/scheduler');
+    initScheduler();
+
     app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
     });

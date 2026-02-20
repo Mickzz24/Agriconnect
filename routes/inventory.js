@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Inventory, OrderItem } = require('../models');
+const { Inventory, OrderItem, User } = require('../models');
 
 // Get all inventory items
 router.get('/', async (req, res) => {
@@ -31,7 +31,29 @@ router.put('/:id', async (req, res) => {
         const item = await Inventory.findByPk(id);
         if (!item) return res.status(404).json({ error: 'Item not found' });
 
+        const oldQuantity = item.quantity;
+
         await item.update({ item_name, category, quantity, unit_price, cost_price, threshold, unit, expiry_date });
+
+        // Check for Replenishment (Quantity Increased)
+        // Ensure quantity is a number
+        if (quantity > oldQuantity) {
+            const addedQty = quantity - oldQuantity;
+            // Send Alert Async
+            (async () => {
+                try {
+                    const recipients = await User.findAll({ where: { role: ['owner', 'staff', 'accountant'] } });
+                    const emails = recipients.map(u => u.email).filter(e => e);
+                    if (emails.length > 0) {
+                        const { sendReplenishmentAlert } = require('../utils/emailService');
+                        await sendReplenishmentAlert(emails, item.item_name, addedQty, quantity);
+                    }
+                } catch (e) {
+                    console.error("Error sending replenishment alert:", e);
+                }
+            })();
+        }
+
         res.json(item);
     } catch (err) {
         res.status(400).json({ error: err.message });

@@ -1,7 +1,8 @@
 // public/js/expenses.js
 
 const expensesTableBody = document.getElementById('expenses-table-body');
-const addExpenseForm = document.getElementById('add-expense-form');
+// Updated to match the ID in dashboard.html modal
+const addExpenseForm = document.getElementById('expenseForm');
 const submitBtn = addExpenseForm ? addExpenseForm.querySelector('button[type="submit"]') : null;
 let editingId = null;
 let expensesData = [];
@@ -13,7 +14,7 @@ window.fetchExpenses = async function () {
             headers: { 'Authorization': localStorage.getItem('token') }
         });
         const data = await response.json();
-        // Sort by id descending to show latest at the top
+        // Sort by id descending
         expensesData = data.sort((a, b) => b.id - a.id);
         renderExpenses(expensesData);
     } catch (err) {
@@ -22,6 +23,7 @@ window.fetchExpenses = async function () {
 };
 
 function renderExpenses(expenses) {
+    if (!expensesTableBody) return;
     expensesTableBody.innerHTML = '';
     expenses.forEach(expense => {
         const tr = document.createElement('tr');
@@ -29,7 +31,7 @@ function renderExpenses(expenses) {
             <td>${expense.category}</td>
             <td>${expense.description || '-'}</td>
             <td>${new Date(expense.date).toLocaleDateString()}</td>
-            <td class="text-danger fw-bold">-$${expense.amount.toFixed(2)}</td>
+            <td class="text-danger fw-bold">$${expense.amount.toFixed(2)}</td>
             <td>
                 <div class="action-buttons">
                     <button class="btn-action btn-edit" onclick="editExpense(${expense.id})"><i class="fas fa-edit"></i> Edit</button>
@@ -49,11 +51,12 @@ if (addExpenseForm) {
     addExpenseForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // IDs from the dashboard.html modal
         const expenseData = {
-            category: document.getElementById('expenseCategory').value,
-            amount: parseFloat(document.getElementById('expenseAmount').value),
-            date: document.getElementById('expenseDate').value,
-            description: document.getElementById('expenseDescription').value
+            category: document.getElementById('expCategory').value,
+            amount: parseFloat(document.getElementById('expAmount').value),
+            date: document.getElementById('expDate').value,
+            description: document.getElementById('expDescription').value
         };
 
         try {
@@ -61,26 +64,19 @@ if (addExpenseForm) {
             if (editingId) {
                 response = await fetch(`/api/expenses/${editingId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': localStorage.getItem('token')
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token') },
                     body: JSON.stringify(expenseData)
                 });
             } else {
                 response = await fetch('/api/expenses', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': localStorage.getItem('token')
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token') },
                     body: JSON.stringify(expenseData)
                 });
             }
 
             if (response.ok) {
-                addExpenseForm.reset();
-                resetExpenseEditMode();
+                closeExpenseModal(); // Close modal on success
                 fetchExpenses();
                 if (typeof fetchStats === 'function') fetchStats();
             } else {
@@ -92,44 +88,51 @@ if (addExpenseForm) {
     });
 }
 
+// Modal Logic
+window.openExpenseModal = function () {
+    const modal = document.getElementById('expenseModal');
+    const form = document.getElementById('expenseForm');
+    if (modal) {
+        modal.style.display = 'block';
+        if (form) form.reset();
+        editingId = null;
+        if (submitBtn) submitBtn.innerText = 'Save Transaction';
+        document.getElementById('expenseModalTitle').innerText = 'Add New Expense';
+        // Set default date
+        document.getElementById('expDate').value = new Date().toISOString().split('T')[0];
+    }
+};
+
+window.closeExpenseModal = function () {
+    const modal = document.getElementById('expenseModal');
+    if (modal) modal.style.display = 'none';
+};
+
 window.editExpense = function (id) {
     const expense = expensesData.find(e => e.id === id);
     if (!expense) return;
 
-    document.getElementById('expenseCategory').value = expense.category;
-    document.getElementById('expenseAmount').value = expense.amount;
-    document.getElementById('expenseDate').value = expense.date.split('T')[0];
-    document.getElementById('expenseDescription').value = expense.description || '';
+    // Open Modal first
+    const modal = document.getElementById('expenseModal');
+    if (modal) modal.style.display = 'block';
+
+    // Populate Fields (IDs match dashboard.html modal)
+    document.getElementById('expCategory').value = expense.category;
+    document.getElementById('expAmount').value = expense.amount;
+    document.getElementById('expDate').value = expense.date.split('T')[0];
+    document.getElementById('expDescription').value = expense.description || '';
 
     editingId = id;
     if (submitBtn) {
         submitBtn.innerText = 'Update Expense';
     }
-
-    if (!document.getElementById('btn-cancel-expense-edit')) {
-        const cancelBtn = document.createElement('button');
-        cancelBtn.id = 'btn-cancel-expense-edit';
-        cancelBtn.type = 'button';
-        cancelBtn.innerText = 'Cancel';
-        cancelBtn.className = 'btn-action';
-        cancelBtn.style.color = 'white';
-        cancelBtn.style.color = 'white';
-        cancelBtn.style.gridColumn = 'span 3';
-        cancelBtn.onclick = resetExpenseEditMode;
-        addExpenseForm.appendChild(cancelBtn);
-    }
-
-    addExpenseForm.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('expenseModalTitle').innerText = 'Edit Expense';
 };
 
 function resetExpenseEditMode() {
     editingId = null;
-    if (submitBtn) {
-        submitBtn.innerText = 'Add Expense';
-    }
-    const cancelBtn = document.getElementById('btn-cancel-expense-edit');
-    if (cancelBtn) cancelBtn.remove();
-    addExpenseForm.reset();
+    if (submitBtn) submitBtn.innerText = 'Save Transaction';
+    if (addExpenseForm) addExpenseForm.reset();
 }
 
 // Delete Expense
