@@ -5034,3 +5034,5 @@ Email sent: 250 2.0.0 OK  1771602649 d9443c01a7336-2ad1a714786sm202907525ad.31 -
 Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
 Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
 Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
+Executing (default): SELECT `id`, `item_name`, `category`, `quantity`, `unit_price`, `unit`, `cost_price`, `threshold`, `expiry_date`, `createdAt`, `updatedAt` FROM `Inventories` AS `Inventory`;
